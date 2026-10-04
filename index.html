@@ -742,9 +742,12 @@
 
     // 5.1 Native Android BLE Mesh Radio Integration
     let nativeBleMesh = null;
+    let nativeBleMeshInitialized = false;
     async function initNativeBleMesh() {
+      if (nativeBleMeshInitialized) return;
       if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativeBleMesh) {
         nativeBleMesh = window.Capacitor.Plugins.NativeBleMesh;
+        nativeBleMeshInitialized = true;
         console.log('⚡ Native Android BLE Mesh Plugin detected!');
         
         try {
@@ -909,13 +912,13 @@
       });
     }
 
-    // 8. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
+    // 8. 4-SECOND AUTOMATIC BACKGROUND DISCOVERY LOOP
     function startRealtimeDiscoveryLoop() {
       setInterval(() => {
         if (!currentUser) return;
         broadcastPresence();
         cleanupInactivePeers();
-      }, 1000);
+      }, 4000);
     }
 
     function forceBroadcast() {
@@ -1398,7 +1401,15 @@
     }
 
     function onMessageReceived(envelope, isGroupMsg) {
-      let convId = isGroupMsg ? envelope.destinationId : (activeChatId && (activeChatId === envelope.senderId || activeChatId.startsWith('ble_')) ? activeChatId : envelope.senderId);
+      let convId;
+      if (isGroupMsg) {
+        convId = envelope.destinationId;
+      } else if (activeChatId && (activeChatId === envelope.senderId || activeChatId.startsWith('ble_') || activeChatId === envelope.destinationId)) {
+        convId = activeChatId;
+      } else {
+        convId = envelope.senderId;
+      }
+
       if (!chatHistories[convId]) chatHistories[convId] = [];
 
       if (!chatHistories[convId].some(m => m.messageId === envelope.messageId)) {
@@ -1424,7 +1435,7 @@
         playMessageChime();
         if (navigator.vibrate) navigator.vibrate([150, 70, 150]);
 
-        if (activeChatId === convId) {
+        if (activeChatId === convId || (isGroupMsg && activeChatId === envelope.destinationId)) {
           renderChatMessages();
         } else {
           unreadCount++;

@@ -31,6 +31,7 @@ import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.getcapacitor.JSObject;
@@ -184,16 +185,21 @@ public class NativeBleMeshPlugin extends Plugin {
                 if (service != null) {
                     BluetoothGattCharacteristic rxChar = service.getCharacteristic(RX_CHAR_UUID);
                     if (rxChar != null) {
-                        rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                        rxChar.setValue(payloadBytes);
                         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                            boolean ok = gatt.writeCharacteristic(rxChar);
-                            if (ok) sentCount++;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                int res = gatt.writeCharacteristic(rxChar, payloadBytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                                if (res == 0) sentCount++;
+                            } else {
+                                rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                                rxChar.setValue(payloadBytes);
+                                boolean ok = gatt.writeCharacteristic(rxChar);
+                                if (ok) sentCount++;
+                            }
                         }
                     }
                 }
             } catch (Exception e) {
-                Log.w(TAG, "Write characteristic error: " + entry.getKey(), e);
+                Log.w(TAG, "Write characteristic error for: " + entry.getKey(), e);
             }
         }
 
@@ -204,11 +210,16 @@ public class NativeBleMeshPlugin extends Plugin {
                 if (serverService != null) {
                     BluetoothGattCharacteristic txChar = serverService.getCharacteristic(TX_CHAR_UUID);
                     if (txChar != null) {
-                        txChar.setValue(payloadBytes);
                         for (Map.Entry<String, BluetoothDevice> serverEntry : connectedGattServers.entrySet()) {
                             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                                gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false);
-                                sentCount++;
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    int res = gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false, payloadBytes);
+                                    if (res == 0) sentCount++;
+                                } else {
+                                    txChar.setValue(payloadBytes);
+                                    boolean ok = gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false);
+                                    if (ok) sentCount++;
+                                }
                             }
                         }
                     }
@@ -228,6 +239,18 @@ public class NativeBleMeshPlugin extends Plugin {
         JSObject ret = new JSObject();
         ret.put("count", discoveredDevices.size());
         call.resolve(ret);
+    }
+
+    private void dispatchIncomingPacket(String senderAddr, byte[] value) {
+        if (value != null && value.length > 0) {
+            String rawStr = new String(value, StandardCharsets.UTF_8);
+            mainHandler.post(() -> {
+                JSObject eventData = new JSObject();
+                eventData.put("rawPacket", rawStr);
+                eventData.put("senderHardwareId", senderAddr);
+                notifyListeners("onPacketReceived", eventData);
+            });
+        }
     }
 
     private void startGattServer() {
@@ -256,18 +279,23 @@ public class NativeBleMeshPlugin extends Plugin {
             public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
                 super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
                 
+                connectedGattServers.put(device.getAddress(), device);
+
                 if (responseNeeded && (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S)) {
                     gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value);
                 }
 
-                if (value != null && value.length > 0) {
-                    String rawStr = new String(value, StandardCharsets.UTF_8);
-                    mainHandler.post(() -> {
-                        JSObject eventData = new JSObject();
-                        eventData.put("rawPacket", rawStr);
-                        eventData.put("senderHardwareId", device.getAddress());
-                        notifyListeners("onPacketReceived", eventData);
-                    });
+                dispatchIncomingPacket(device.getAddress(), value);
+            }
+
+            @Override
+            public void onDescriptorWriteRequest(BluetoothDevice device, int requestId, BluetoothGattDescriptor descriptor, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+                super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value);
+                
+                connectedGattServers.put(device.getAddress(), device);
+
+                if (responseNeeded && (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S)) {
+                    gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value);
                 }
             }
         });
@@ -410,8 +438,10 @@ public class NativeBleMeshPlugin extends Plugin {
             if (!isQuickChatPeer) return;
 
             String addr = device.getAddress();
-            if (!discoveredDevices.containsKey(addr)) {
-                discoveredDevices.put(addr, device);
+            boolean isNew = !discoveredDevices.containsKey(addr);
+            discoveredDevices.put(addr, device);
+
+            if (isNew) {
                 Log.i(TAG, "Discovered Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
 
                 String displayName = "Nearby Phone (" + addr.substring(Math.max(0, addr.length() - 5)) + ")";
@@ -427,8 +457,10 @@ public class NativeBleMeshPlugin extends Plugin {
                     peerData.put("rssi", result.getRssi());
                     notifyListeners("onPeerDiscovered", peerData);
                 });
+            }
 
-                // Auto-connect GATT client
+            // Ensure GATT connection is maintained and reconnected if disconnected
+            if (!connectedGattClients.containsKey(addr)) {
                 connectGattClient(device);
             }
         }
@@ -448,11 +480,16 @@ public class NativeBleMeshPlugin extends Plugin {
                     connectedGattClients.put(device.getAddress(), gatt);
                     Log.i(TAG, "Connected to Peer GATT: " + device.getAddress());
                     if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                        gatt.requestMtu(512);
+                        boolean mtuRequested = gatt.requestMtu(512);
+                        if (!mtuRequested) {
+                            gatt.discoverServices();
+                        }
                     }
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED || status != BluetoothGatt.GATT_SUCCESS) {
                     connectedGattClients.remove(device.getAddress());
-                    gatt.close();
+                    try {
+                        gatt.close();
+                    } catch (Exception ignored) {}
                     Log.i(TAG, "Disconnected from Peer GATT: " + device.getAddress());
                 }
             }
@@ -489,18 +526,15 @@ public class NativeBleMeshPlugin extends Plugin {
             }
 
             @Override
-            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            public void onCharacteristicChanged(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicChanged(gatt, characteristic);
-                byte[] value = characteristic.getValue();
-                if (value != null && value.length > 0) {
-                    String rawStr = new String(value, StandardCharsets.UTF_8);
-                    mainHandler.post(() -> {
-                        JSObject eventData = new JSObject();
-                        eventData.put("rawPacket", rawStr);
-                        eventData.put("senderHardwareId", gatt.getDevice().getAddress());
-                        notifyListeners("onPacketReceived", eventData);
-                    });
-                }
+                dispatchIncomingPacket(gatt.getDevice().getAddress(), characteristic.getValue());
+            }
+
+            @Override
+            public void onCharacteristicChanged(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattCharacteristic characteristic, @NonNull byte[] value) {
+                super.onCharacteristicChanged(gatt, characteristic, value);
+                dispatchIncomingPacket(gatt.getDevice().getAddress(), value != null ? value : characteristic.getValue());
             }
         });
     }
