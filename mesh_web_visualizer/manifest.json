@@ -1,0 +1,16 @@
+{
+  "name": "QuickChat Mesh",
+  "short_name": "QuickChat",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0B0E17",
+  "theme_color": "#00E5FF",
+  "icons": [
+    {
+      "src": "./app_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
