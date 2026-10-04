@@ -794,13 +794,21 @@
       const stored = localStorage.getItem('qc_user_identity');
       if (stored) {
         currentUser = JSON.parse(stored);
-        updateIdentityUI();
       } else {
         const defaultName = 'User_' + Math.floor(Math.random() * 899 + 100);
-        document.getElementById('onboardUsername').value = defaultName.toLowerCase();
-        document.getElementById('onboardDisplayName').value = defaultName;
-        document.getElementById('onboardingView').classList.add('active');
+        const userId = 'usr_' + Math.random().toString(16).substring(2, 8).toUpperCase();
+        const pubKey = 'pub_key_' + Math.random().toString(36).substring(2, 12);
+        currentUser = {
+          id: userId,
+          username: defaultName.toLowerCase(),
+          displayName: defaultName,
+          publicKey: pubKey,
+          createdAt: Date.now()
+        };
+        localStorage.setItem('qc_user_identity', JSON.stringify(currentUser));
       }
+      updateIdentityUI();
+      initNativeBleMesh();
     }
 
     function saveUserIdentity() {

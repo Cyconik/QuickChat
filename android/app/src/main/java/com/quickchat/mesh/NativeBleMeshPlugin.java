@@ -18,6 +18,7 @@ import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
@@ -134,6 +135,12 @@ public class NativeBleMeshPlugin extends Plugin {
                 getContext().startActivity(enableBtIntent);
             } catch (Exception ignored) {}
         }
+
+        try {
+            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                bluetoothAdapter.setName("QC_" + selfDisplayName.replace(" ", "_"));
+            }
+        } catch (Exception ignored) {}
 
         startGattServer();
         startAdvertising();
@@ -285,7 +292,7 @@ public class NativeBleMeshPlugin extends Plugin {
             .build();
 
         AdvertiseData data = new AdvertiseData.Builder()
-            .setIncludeDeviceName(false)
+            .setIncludeDeviceName(true)
             .addServiceUuid(new ParcelUuid(SERVICE_UUID))
             .build();
 
@@ -326,8 +333,8 @@ public class NativeBleMeshPlugin extends Plugin {
             return;
         }
 
+        // Empty filter to bypass OEM chip filtering bugs on 128-bit UUIDs
         List<ScanFilter> filters = new ArrayList<>();
-        filters.add(new ScanFilter.Builder().setServiceUuid(new ParcelUuid(SERVICE_UUID)).build());
 
         ScanSettings settings = new ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -354,15 +361,44 @@ public class NativeBleMeshPlugin extends Plugin {
             BluetoothDevice device = result.getDevice();
             if (device == null) return;
 
+            ScanRecord record = result.getScanRecord();
+            boolean isQuickChatPeer = false;
+
+            if (record != null) {
+                List<ParcelUuid> uuids = record.getServiceUuids();
+                if (uuids != null && uuids.contains(new ParcelUuid(SERVICE_UUID))) {
+                    isQuickChatPeer = true;
+                }
+                String deviceName = record.getDeviceName();
+                if (deviceName != null && (deviceName.startsWith("QC_") || deviceName.contains("QuickChat"))) {
+                    isQuickChatPeer = true;
+                }
+            }
+
+            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                String name = device.getName();
+                if (name != null && (name.startsWith("QC_") || name.contains("QuickChat"))) {
+                    isQuickChatPeer = true;
+                }
+            }
+
+            if (!isQuickChatPeer) return;
+
             String addr = device.getAddress();
             if (!discoveredDevices.containsKey(addr)) {
                 discoveredDevices.put(addr, device);
-                Log.i(TAG, "Discovered Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
+                Log.i(TAG, "Discovered QuickChat Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
 
+                String displayName = "Nearby Phone (" + addr.substring(Math.max(0, addr.length() - 5)) + ")";
+                if (record != null && record.getDeviceName() != null) {
+                    displayName = record.getDeviceName().replace("QC_", "");
+                }
+
+                final String peerDisplayName = displayName;
                 mainHandler.post(() -> {
                     JSObject peerData = new JSObject();
                     peerData.put("hardwareId", addr);
-                    peerData.put("name", "BLE Phone (" + addr.substring(Math.max(0, addr.length() - 5)) + ")");
+                    peerData.put("name", peerDisplayName);
                     peerData.put("rssi", result.getRssi());
                     notifyListeners("onPeerDiscovered", peerData);
                 });
