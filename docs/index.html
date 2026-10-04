@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>QuickChat - Mesh Chat & Nearby Social App</title>
   <link rel="icon" type="image/png" href="./app_icon.png">
   <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0B0E17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -24,315 +27,571 @@
       --error: #FF3366;
       --text: #F1F5F9;
       --text-muted: #94A3B8;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background-color: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
     
-    .navbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--surface-light); }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-logo { width: 50px; height: 50px; border-radius: 14px; box-shadow: 0 0 16px var(--primary-glow); border: 1px solid rgba(0, 229, 255, 0.4); object-fit: cover; }
-    h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-    .subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+    /* Top Header */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-light);
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-logo { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 10px var(--primary-glow); flex-shrink: 0; object-fit: cover; }
+    .brand-text h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-text .status-line { font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 4px; font-weight: 600; }
+    .pulse-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 6px var(--accent); display: inline-block; }
     
-    .main-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { background: var(--surface); color: var(--text-muted); border: 1px solid var(--surface-light); padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-    .tab-btn.active { background: var(--primary); color: #050B14; border-color: var(--primary); box-shadow: 0 0 14px var(--primary-glow); }
+    .install-btn {
+      background: var(--primary);
+      color: #050B14;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .install-btn:hover { transform: scale(1.02); }
 
-    .view-section { display: none; }
-    .view-section.active { display: block; }
+    /* Main Container */
+    .app-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 14px;
+      padding-bottom: calc(75px + var(--safe-bottom));
+    }
+
+    /* Tabs / View Containers */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Card System */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-light);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text);
+    }
+    .card-title .title-left { display: flex; align-items: center; gap: 8px; }
+
+    /* Status Banner */
+    .status-banner {
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(124, 77, 255, 0.08));
+      border: 1px solid rgba(0, 229, 255, 0.25);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .status-tag { background: rgba(0, 245, 155, 0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 20px; }
     
-    .grid-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
-    .card { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); margin-bottom: 20px; }
-    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--text); }
-    
-    /* Topology Graph */
-    .topology-container { display: flex; justify-content: space-between; align-items: center; padding: 32px 16px; position: relative; background: var(--surface-hi); border-radius: 16px; margin-bottom: 20px; }
-    .node { width: 68px; height: 68px; border-radius: 50%; background: var(--surface); border: 2px solid var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; position: relative; z-index: 2; }
-    .node.active { box-shadow: 0 0 20px var(--primary-glow); }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+    .stat-item { background: rgba(0, 0, 0, 0.25); padding: 8px 4px; border-radius: 10px; }
+    .stat-item .val { font-size: 14px; font-weight: 800; color: var(--primary); font-family: 'JetBrains Mono', monospace; }
+    .stat-item .lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Responsive 5-Node Topology */
+    .topology-card { overflow-x: auto; padding: 14px 10px; }
+    .topology-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-width: 320px;
+      padding: 20px 8px;
+      position: relative;
+      background: var(--surface-hi);
+      border-radius: 14px;
+    }
+    .node {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .node.active { box-shadow: 0 0 12px var(--primary-glow); }
     .node.offline { border-color: var(--error); opacity: 0.6; }
-    .node-label { font-weight: 800; font-size: 15px; }
-    .node-sub { font-size: 9px; color: var(--text-muted); text-align: center; }
-    .node-status { position: absolute; bottom: -20px; font-size: 10px; font-weight: 700; color: var(--accent); }
+    .node-label { font-weight: 800; font-size: 13px; line-height: 1; }
+    .node-sub { font-size: 8px; color: var(--text-muted); }
+    .node-status { position: absolute; bottom: -16px; font-size: 9px; font-weight: 700; color: var(--accent); white-space: nowrap; }
     .node.offline .node-status { color: var(--error); }
     
-    .link-line { flex: 1; height: 3px; background: var(--surface-light); position: relative; }
-    .link-line.active { background: linear-gradient(90deg, var(--primary), var(--secondary)); box-shadow: 0 0 8px var(--primary-glow); }
-    
-    /* Controls */
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-    button { background: var(--primary); color: #050B14; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
-    button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--primary-glow); }
-    button.secondary { background: var(--surface-light); color: var(--text); border: 1px solid var(--surface-hi); }
-    button.accent { background: var(--accent); }
-    button.violet { background: var(--secondary); color: #FFF; }
-    
-    /* Real SVG Icons helper */
-    .icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
-    .icon-lg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    
-    /* Logs & Trace */
-    .log-box { background: #07090F; border: 1px solid var(--surface-light); border-radius: 12px; padding: 14px; height: 340px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-    .log-entry { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; align-items: flex-start; }
-    .log-time { color: var(--text-muted); font-size: 10px; }
-    .log-tag { font-weight: 700; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+    .link-line { flex: 1; height: 2px; background: var(--surface-light); min-width: 8px; }
+    .link-line.active { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+
+    /* Controls & Buttons */
+    .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    button.btn {
+      background: var(--primary);
+      color: #050B14;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      transition: all 0.15s;
+    }
+    button.btn:active { transform: scale(0.98); }
+    button.btn.secondary { background: var(--surface-light); color: var(--text); border: 1px solid var(--surface-hi); }
+    button.btn.accent { background: var(--accent); color: #050B14; }
+    button.btn.violet { background: var(--secondary); color: #FFF; }
+
+    /* Log Box */
+    .log-box {
+      background: #07090F;
+      border: 1px solid var(--surface-light);
+      border-radius: 12px;
+      padding: 10px;
+      height: 220px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .log-entry { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 6px; align-items: flex-start; }
+    .log-time { color: var(--text-muted); font-size: 9px; }
+    .log-tag { font-weight: 700; padding: 1px 4px; border-radius: 3px; font-size: 9px; flex-shrink: 0; }
     .tag-hop { background: var(--primary-glow); color: var(--primary); }
     .tag-delivered { background: var(--accent-glow); color: var(--accent); }
     .tag-drop { background: rgba(255, 51, 102, 0.2); color: var(--error); }
     .tag-store { background: rgba(255, 179, 0, 0.2); color: var(--warning); }
+
+    /* Peer Tile */
+    .peer-tile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--surface-hi);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    .peer-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .peer-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-glow); display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: bold; font-size: 13px; flex-shrink: 0; }
+    .peer-name { font-weight: 700; font-size: 13px; }
+    .peer-meta { font-size: 11px; color: var(--text-muted); }
+    .peer-btn { background: var(--surface-light); color: var(--primary); border: 1px solid var(--primary); padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+    /* Chat UI */
+    .chat-view {
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--surface-light);
+      overflow: hidden;
+    }
+    .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .msg-bubble { max-width: 82%; padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.3; }
+    .msg-in { align-self: flex-start; background: var(--surface-hi); border-bottom-left-radius: 2px; }
+    .msg-out { align-self: flex-end; background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 77, 255, 0.25)); border: 1px solid rgba(0, 229, 255, 0.3); border-bottom-right-radius: 2px; }
+    .msg-meta { font-size: 9px; margin-top: 3px; color: var(--text-muted); text-align: right; }
+    .chat-input-bar { display: flex; gap: 6px; padding: 8px 10px; background: #07090F; border-top: 1px solid var(--surface-light); }
+    .chat-input { flex: 1; background: var(--surface); border: 1px solid var(--surface-light); color: var(--text); padding: 8px 12px; border-radius: 10px; font-size: 13px; outline: none; }
+    .chat-send-btn { background: var(--primary); color: #050B14; border: none; padding: 8px 14px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+    /* Radar Canvas */
+    .radar-box { position: relative; height: 200px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 14px; background: var(--surface-hi); margin-bottom: 12px; }
+    .radar-circle { position: absolute; border-radius: 50%; border: 1px solid var(--surface-light); }
+    .radar-sweep { position: absolute; width: 180px; height: 180px; border-radius: 50%; border: 2px solid var(--primary); animation: radarPulse 2s infinite ease-out; }
+    @keyframes radarPulse { 0% { transform: scale(0.1); opacity: 0.8; } 100% { transform: scale(1.1); opacity: 0; } }
+
+    /* Bottom Navigation Bar (Mobile) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--surface-light);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      padding-bottom: calc(8px + var(--safe-bottom));
+      z-index: 100;
+    }
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px 8px;
+    }
+    .nav-tab.active { color: var(--primary); font-weight: 700; }
     
-    /* Phone Mockup Frame */
-    .phone-container { display: flex; justify-content: center; align-items: center; padding: 10px 0; }
-    .phone-mockup { width: 390px; height: 780px; background: #000; border-radius: 44px; border: 8px solid #1E293B; box-shadow: 0 25px 50px -12px rgba(0, 229, 255, 0.25); overflow: hidden; display: flex; flex-direction: column; position: relative; }
-    .phone-header { background: var(--surface); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--surface-light); }
-    .phone-body { flex: 1; background: var(--bg); overflow-y: auto; padding: 16px; }
-    .phone-bottom-nav { background: var(--surface); border-top: 1px solid var(--surface-light); display: flex; justify-content: space-around; padding: 10px 0; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted); cursor: pointer; }
-    .nav-item.active { color: var(--primary); font-weight: 700; }
+    .icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-lg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* Desktop adjustments */
+    @media (min-width: 768px) {
+      .app-header { padding: 14px 24px; }
+      .app-container { padding: 24px; }
+      .btn-group { flex-direction: row; flex-wrap: wrap; }
+      .btn-group button.btn { flex: 1; min-width: 180px; }
+      .topology-container { padding: 28px 20px; }
+      .node { width: 62px; height: 62px; }
+      .node-label { font-size: 15px; }
+    }
   </style>
 </head>
 <body>
-  <div class="navbar">
+  <!-- Header -->
+  <header class="app-header">
     <div class="brand">
-      <img src="./app_icon.png" alt="QuickChat Logo" class="brand-logo">
-      <div>
-        <h1>QuickChat — Mesh Communication Platform</h1>
-        <div class="subtitle">Multi-Hop BLE Routing • Store-and-Forward • E2E Encryption</div>
+      <img src="./app_icon.png" alt="QuickChat" class="brand-logo">
+      <div class="brand-text">
+        <h1>QuickChat Mesh</h1>
+        <div class="status-line"><span class="pulse-dot"></span> P2P Mesh Active</div>
       </div>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <button class="accent" onclick="triggerPwaInstall()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Install QuickChat App
-      </button>
-    </div>
-  </div>
-
-  <div class="main-tabs">
-    <button class="tab-btn active" onclick="switchView('simView', this)">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
-      Multi-Hop Mesh Simulator
+    <button class="install-btn" onclick="triggerPwaInstall()">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Install App
     </button>
-    <button class="tab-btn" onclick="switchView('appView', this)">
-      <svg class="icon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      Interactive Mobile App Client
-    </button>
-  </div>
+  </header>
 
-  <!-- VIEW 1: MULTI-HOP MESH SIMULATOR -->
-  <div id="simView" class="view-section active">
-    <div class="grid-layout">
-      <div>
-        <div class="card">
-          <div class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
-            Live 5-Node Mesh Topology (A ↔ B ↔ C ↔ D ↔ E)
-          </div>
-          <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 16px;">
-            Click any intermediate node (e.g. Node C) to disconnect it and watch packets dynamically buffer in the local <strong>Store-and-Forward</strong> queue until restored.
-          </p>
+  <!-- Main Views Container -->
+  <main class="app-container">
 
-          <div class="topology-container">
-            <div class="node active" id="node-A" onclick="toggleNode('A')">
-              <div class="node-label">A</div>
-              <div class="node-sub">Sender</div>
-              <div class="node-status" id="status-A">ONLINE</div>
-            </div>
-            <div class="link-line active" id="link-AB"></div>
-
-            <div class="node active" id="node-B" onclick="toggleNode('B')">
-              <div class="node-label">B</div>
-              <div class="node-sub">Relay 1</div>
-              <div class="node-status" id="status-B">ONLINE</div>
-            </div>
-            <div class="link-line active" id="link-BC"></div>
-
-            <div class="node active" id="node-C" onclick="toggleNode('C')">
-              <div class="node-label">C</div>
-              <div class="node-sub">Relay 2</div>
-              <div class="node-status" id="status-C">ONLINE</div>
-            </div>
-            <div class="link-line active" id="link-CD"></div>
-
-            <div class="node active" id="node-D" onclick="toggleNode('D')">
-              <div class="node-label">D</div>
-              <div class="node-sub">Relay 3</div>
-              <div class="node-status" id="status-D">ONLINE</div>
-            </div>
-            <div class="link-line active" id="link-DE"></div>
-
-            <div class="node active" id="node-E" onclick="toggleNode('E')">
-              <div class="node-label">E</div>
-              <div class="node-sub">Destination</div>
-              <div class="node-status" id="status-E">ONLINE</div>
-            </div>
-          </div>
-
-          <div class="card-title" style="margin-top: 24px;">
-            <svg class="icon" viewBox="0 0 24 24" style="color:var(--accent);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Automated Test Scenarios
-          </div>
-          <div class="btn-group">
-            <button onclick="runTestAToE()">
-              <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              Test Scenario 1: A → E Multi-Hop (4 Hops)
-            </button>
-            <button class="accent" onclick="runTestDirect()">
-              <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              Test Scenario 2: A → B Direct BLE
-            </button>
-            <button class="violet" onclick="runTestGroup()">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Test Scenario 3: Group Fanout ("Delhi Community")
-            </button>
-            <button class="secondary" onclick="toggleNode('C')">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              Disconnect / Restore Node C
-            </button>
-            <button class="secondary" onclick="clearLogs()">
-              <svg class="icon" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-              Clear Logs
-            </button>
-          </div>
+    <!-- TAB 1: HOME DASHBOARD -->
+    <section id="tab-home" class="tab-content active">
+      <div class="status-banner">
+        <div class="status-header">
+          <div style="font-weight: 800; font-size: 15px;">Nearby Mesh Network</div>
+          <span class="status-tag">ACTIVE RELAY</span>
         </div>
-
-        <div class="card">
-          <div class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-            Real-Time Packet Hop Trace & Deduplication Log
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="val" id="statPeersCount">4 nodes</div>
+            <div class="lbl">Nearby Peers</div>
           </div>
-          <div class="log-box" id="logBox">
-            <div class="log-entry">
-              <span class="log-time">[00:00:00]</span>
-              <span class="log-tag tag-hop">READY</span>
-              <span>QuickChat Mesh Protocol Engine active. AES-256-GCM authenticated encryption initialized.</span>
-            </div>
+          <div class="stat-item">
+            <div class="val" style="color:var(--accent);">READY</div>
+            <div class="lbl">Bluetooth LE</div>
+          </div>
+          <div class="stat-item">
+            <div class="val" style="color:var(--warning);">MESH-ONLY</div>
+            <div class="lbl">Internet</div>
           </div>
         </div>
       </div>
 
-      <div>
-        <div class="card">
-          <div class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            Mesh Protocol Telemetry
+      <div class="card">
+        <div class="card-title">
+          <div class="title-left">
+            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Discovered Nearby Peers
           </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--surface-light); font-size:13px;">
-            <span>Packets Originated</span>
-            <span style="font-weight:700; color:var(--primary);" id="statSent">0</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--surface-light); font-size:13px;">
-            <span>Packets Relayed</span>
-            <span style="font-weight:700; color:var(--primary);" id="statRelayed">0</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--surface-light); font-size:13px;">
-            <span>Packets Delivered</span>
-            <span style="font-weight:700; color:var(--accent);" id="statDelivered">0</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--surface-light); font-size:13px;">
-            <span>Loops Prevented</span>
-            <span style="font-weight:700; color:var(--secondary);" id="statLoops">0</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--surface-light); font-size:13px;">
-            <span>Store-and-Forward Flushed</span>
-            <span style="font-weight:700; color:var(--warning);" id="statFlushed">0</span>
-          </div>
+          <span style="font-size:11px; color:var(--accent); font-weight:700;">Live BLE</span>
         </div>
 
-        <div class="card">
-          <div class="card-title">
-            <svg class="icon" viewBox="0 0 24 24" style="color:var(--secondary);"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-            Destination Node Inboxes
-          </div>
-          <div id="inboxDisplay" style="font-size: 12px; color: var(--text-muted);">
-            No messages received yet. Run a test scenario above to inspect decrypted envelopes.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIEW 2: INTERACTIVE MOBILE CLIENT -->
-  <div id="appView" class="view-section">
-    <div class="phone-container">
-      <div class="phone-mockup">
-        <div class="phone-header">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img src="./app_icon.png" style="width:34px; height:34px; border-radius:8px; object-fit: cover;">
+        <div class="peer-tile">
+          <div class="peer-info">
+            <div class="peer-avatar">R</div>
             <div>
-              <div style="font-weight:800; font-size:14px;">Rahul Sharma</div>
-              <div style="font-size:10px; color:var(--accent);">● Mesh Active (3 Peers)</div>
+              <div class="peer-name">Rahul Sharma</div>
+              <div class="peer-meta">@rahul_dev • <span style="color:var(--accent); font-weight:600;">-62 dBm (&lt; 10m)</span></div>
             </div>
           </div>
-          <div style="font-size:11px; color:var(--primary); font-weight:700; background:var(--surface-light); padding:4px 8px; border-radius:10px; display:flex; align-items:center; gap:4px;">
-            <svg class="icon" style="width:12px; height:12px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            E2E SECURE
+          <button class="peer-btn" onclick="openChat('Rahul Sharma', 'Direct BLE')">Message</button>
+        </div>
+
+        <div class="peer-tile">
+          <div class="peer-info">
+            <div class="peer-avatar" style="background:rgba(124, 77, 255, 0.2); color:var(--secondary);">P</div>
+            <div>
+              <div class="peer-name">Priya Patel</div>
+              <div class="peer-meta">@priya • <span style="color:var(--primary); font-weight:600;">-74 dBm (Mesh Relay)</span></div>
+            </div>
+          </div>
+          <button class="peer-btn" onclick="openChat('Priya Patel', 'Mesh (1 hop)')">Message</button>
+        </div>
+
+        <div class="peer-tile">
+          <div class="peer-info">
+            <div class="peer-avatar" style="background:rgba(0, 245, 155, 0.2); color:var(--accent);">N</div>
+            <div>
+              <div class="peer-name">Nikhil Verma</div>
+              <div class="peer-meta">@nikhil_v • <span style="color:var(--warning); font-weight:600;">-85 dBm (2 hops)</span></div>
+            </div>
+          </div>
+          <button class="peer-btn" onclick="openChat('Nikhil Verma', 'Mesh (2 hops)')">Message</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="title-left">
+            <svg class="icon" viewBox="0 0 24 24" style="color:var(--secondary);"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Quick Simulator Access
+          </div>
+        </div>
+        <p style="color:var(--text-muted); font-size:12px; margin-bottom:10px;">Test multi-hop packet routing across 5 nodes even without other phones nearby.</p>
+        <button class="btn" onclick="switchNav('tab-sim')">Open 5-Node Mesh Simulator</button>
+      </div>
+    </section>
+
+    <!-- TAB 2: CHATS -->
+    <section id="tab-chats" class="tab-content">
+      <div class="card" style="padding:10px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div id="activeChatTitle" style="font-weight:800; font-size:14px;">Rahul Sharma</div>
+          <div id="activeChatRoute" style="font-size:10px; color:var(--accent);">● Route: Direct BLE Radio</div>
+        </div>
+        <div style="font-size:10px; color:var(--primary); font-weight:700; background:var(--surface-light); padding:4px 8px; border-radius:8px;">
+          E2E AES-256
+        </div>
+      </div>
+
+      <div class="chat-view">
+        <div class="chat-messages" id="chatMessagesBox">
+          <div style="background:rgba(0, 229, 255, 0.08); padding:8px 12px; border-radius:10px; font-size:11px; color:var(--text-muted); text-align:center;">
+            🔒 End-to-End Encrypted. Relay nodes cannot inspect payload.
+          </div>
+          <div class="msg-bubble msg-in">
+            Hey! Are you connected to the mesh network right now?
+            <div class="msg-meta">10:14 AM • Direct BLE</div>
+          </div>
+          <div class="msg-bubble msg-out">
+            Yes! Relaying encrypted packets through local nodes.
+            <div class="msg-meta" style="color:var(--accent);">10:15 AM • ✓✓✓ Delivered (2 hops)</div>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" id="chatInput" class="chat-input" placeholder="Type encrypted message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+          <button class="chat-send-btn" onclick="sendChatMessage()">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: RADAR -->
+    <section id="tab-radar" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <div class="title-left">
+            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
+            Nearby BLE Proximity Radar
+          </div>
+          <span style="font-size:11px; color:var(--accent); font-weight:700;">Scanning</span>
+        </div>
+
+        <div class="radar-box">
+          <div class="radar-circle" style="width:60px; height:60px;"></div>
+          <div class="radar-circle" style="width:120px; height:120px;"></div>
+          <div class="radar-circle" style="width:180px; height:180px;"></div>
+          <div class="radar-sweep"></div>
+          <div style="width:14px; height:14px; background:var(--primary); border-radius:50%; box-shadow:0 0 10px var(--primary); z-index:5;"></div>
+        </div>
+
+        <div style="font-size:12px; color:var(--text-muted); text-align:center;">
+          Approximate Bluetooth signal strength. Exact GPS location is never exposed.
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: SIMULATOR (5 NODES) -->
+    <section id="tab-sim" class="tab-content">
+      <div class="card topology-card">
+        <div class="card-title">
+          <div class="title-left">
+            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            5-Node Multi-Hop Topology
+          </div>
+          <span style="font-size:10px; color:var(--text-muted);">Tap node to toggle</span>
+        </div>
+
+        <div class="topology-container">
+          <div class="node active" id="node-A" onclick="toggleNode('A')">
+            <div class="node-label">A</div>
+            <div class="node-sub">Src</div>
+            <div class="node-status" id="status-A">ONLINE</div>
+          </div>
+          <div class="link-line active" id="link-AB"></div>
+
+          <div class="node active" id="node-B" onclick="toggleNode('B')">
+            <div class="node-label">B</div>
+            <div class="node-sub">R1</div>
+            <div class="node-status" id="status-B">ONLINE</div>
+          </div>
+          <div class="link-line active" id="link-BC"></div>
+
+          <div class="node active" id="node-C" onclick="toggleNode('C')">
+            <div class="node-label">C</div>
+            <div class="node-sub">R2</div>
+            <div class="node-status" id="status-C">ONLINE</div>
+          </div>
+          <div class="link-line active" id="link-CD"></div>
+
+          <div class="node active" id="node-D" onclick="toggleNode('D')">
+            <div class="node-label">D</div>
+            <div class="node-sub">R3</div>
+            <div class="node-status" id="status-D">ONLINE</div>
+          </div>
+          <div class="link-line active" id="link-DE"></div>
+
+          <div class="node active" id="node-E" onclick="toggleNode('E')">
+            <div class="node-label">E</div>
+            <div class="node-sub">Dest</div>
+            <div class="node-status" id="status-E">ONLINE</div>
           </div>
         </div>
 
-        <div class="phone-body" id="phoneChatBody">
-          <div style="background:var(--surface); padding:12px; border-radius:14px; margin-bottom:12px; border:1px solid var(--surface-light);">
-            <div style="font-size:11px; color:var(--primary); font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
-              <svg class="icon" style="width:12px; height:12px;" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Cryptographic Mesh Channel
-            </div>
-            <div style="font-size:11px; color:var(--text-muted);">All messages are end-to-end encrypted with AES-256-GCM. Relaying nodes cannot inspect contents.</div>
-          </div>
-
-          <div style="margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-start;">
-            <div style="background:var(--surface); border:1px solid var(--surface-light); padding:10px 14px; border-radius:16px 16px 16px 4px; max-width:80%; font-size:13px;">
-              Hey Rahul, are you attending the mesh meetup?
-            </div>
-            <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Priya • 10:14 AM • Direct BLE</div>
-          </div>
-
-          <div style="margin-bottom:10px; display:flex; flex-direction:column; align-items:flex-end;">
-            <div style="background:var(--surface-hi); border:1px solid rgba(0, 229, 255, 0.3); padding:10px 14px; border-radius:16px 16px 4px 16px; max-width:80%; font-size:13px;">
-              Yes! Relaying through local mesh network.
-            </div>
-            <div style="font-size:10px; color:var(--accent); margin-top:4px;">10:15 AM • ✓✓✓ Delivered (2 hops)</div>
-          </div>
-        </div>
-
-        <div style="padding:10px 14px; background:var(--surface); border-top:1px solid var(--surface-light); display:flex; gap:8px;">
-          <input type="text" id="mobileInput" placeholder="Send encrypted mesh packet..." style="flex:1; background:var(--bg); border:1px solid var(--surface-light); color:var(--text); padding:8px 12px; border-radius:10px; font-size:12px;" onkeydown="if(event.key==='Enter') sendMobileMessage()">
-          <button onclick="sendMobileMessage()" style="padding:8px 14px;">
-            <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Send
+        <div class="btn-group">
+          <button class="btn" onclick="runTestAToE()">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            Test 1: Send A → E (4 Hops)
+          </button>
+          <button class="btn accent" onclick="runTestDirect()">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Test 2: Send A → B (Direct)
+          </button>
+          <button class="btn violet" onclick="runTestGroup()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Test 3: Group Fanout ("Delhi Tech")
+          </button>
+          <button class="btn secondary" onclick="toggleNode('C')">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+            Break / Restore Node C (Store & Forward)
           </button>
         </div>
+      </div>
 
-        <div class="phone-bottom-nav">
-          <div class="nav-item active">
-            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <span>Home</span>
+      <div class="card">
+        <div class="card-title">
+          <div class="title-left">
+            <svg class="icon" viewBox="0 0 24 24" style="color:var(--primary);"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            Live Routing Log
           </div>
-          <div class="nav-item">
-            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span>Chats</span>
-          </div>
-          <div class="nav-item">
-            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
-            <span>Radar</span>
-          </div>
-          <div class="nav-item">
-            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span>Groups</span>
-          </div>
-          <div class="nav-item">
-            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>Profile</span>
+          <button class="peer-btn" style="padding:2px 8px; font-size:9px;" onclick="clearLogs()">Clear</button>
+        </div>
+        <div class="log-box" id="logBox">
+          <div class="log-entry">
+            <span class="log-time">[00:00:00]</span>
+            <span class="log-tag tag-hop">READY</span>
+            <span>Mesh protocol engine running. Ready for simulation.</span>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+
+    <!-- TAB 5: PROFILE -->
+    <section id="tab-profile" class="tab-content">
+      <div class="card" style="text-align:center; padding:24px 16px;">
+        <div style="width:64px; height:64px; border-radius:50%; background:var(--primary-glow); border:2px solid var(--primary); margin:0 auto 12px; display:flex; align-items:center; justify-content:center; color:var(--primary);">
+          <svg style="width:32px; height:32px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div style="font-weight:800; font-size:18px;">Anonymous Fox</div>
+        <div style="color:var(--primary); font-size:12px; font-weight:700; margin-top:2px;">@anonymousfox</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:6px; font-family:'JetBrains Mono', monospace;">ID: usr_8F92A1</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="title-left">
+            <svg class="icon" viewBox="0 0 24 24" style="color:var(--accent);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Public Key (Ed25519)
+          </div>
+        </div>
+        <div style="background:#07090F; padding:10px; border-radius:10px; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--text-muted); word-break:break-all;">
+          MCowBQYDK2VwAyEAg8f2A1k9LmNoPqRsTuVwXyZ0123456789abcdef=
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" onclick="switchNav('tab-home', this)">
+      <svg class="icon-lg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-tab" onclick="switchNav('tab-chats', this)">
+      <svg class="icon-lg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Chats</span>
+    </button>
+    <button class="nav-tab" onclick="switchNav('tab-radar', this)">
+      <svg class="icon-lg" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
+      <span>Radar</span>
+    </button>
+    <button class="nav-tab" onclick="switchNav('tab-sim', this)">
+      <svg class="icon-lg" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>Simulator</span>
+    </button>
+    <button class="nav-tab" onclick="switchNav('tab-profile', this)">
+      <svg class="icon-lg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </button>
+  </nav>
 
   <script>
-    function switchView(viewId, btn) {
-      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(viewId).classList.add('active');
-      btn.classList.add('active');
+    function switchNav(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (btn) btn.classList.add('active');
+      else {
+        const matchingBtn = Array.from(document.querySelectorAll('.nav-tab')).find(b => b.getAttribute('onclick').includes(tabId));
+        if (matchingBtn) matchingBtn.classList.add('active');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openChat(name, route) {
+      document.getElementById('activeChatTitle').innerText = name;
+      document.getElementById('activeChatRoute').innerText = '● Route: ' + route;
+      switchNav('tab-chats');
     }
 
     const nodes = {
@@ -364,30 +623,6 @@
       box.insertBefore(div, box.firstChild);
     }
 
-    function updateStats() {
-      document.getElementById('statSent').innerText = stats.sent;
-      document.getElementById('statRelayed').innerText = stats.relayed;
-      document.getElementById('statDelivered').innerText = stats.delivered;
-      document.getElementById('statLoops').innerText = stats.loops;
-      document.getElementById('statFlushed').innerText = stats.flushed;
-      updateInboxView();
-    }
-
-    function updateInboxView() {
-      const container = document.getElementById('inboxDisplay');
-      let html = '';
-      for (const [nodeId, data] of Object.entries(nodes)) {
-        if (data.inbox.length > 0) {
-          html += `<div style="margin-bottom: 8px;"><strong>Node ${nodeId}:</strong><br>`;
-          for (const msg of data.inbox) {
-            html += `<span style="color: var(--accent);">• "${msg.text}" (via ${msg.hops} hops)</span><br>`;
-          }
-          html += `</div>`;
-        }
-      }
-      container.innerHTML = html || 'No messages received yet.';
-    }
-
     function toggleNode(id) {
       nodes[id].online = !nodes[id].online;
       const el = document.getElementById(`node-${id}`);
@@ -395,52 +630,45 @@
       if (nodes[id].online) {
         el.className = 'node active';
         st.innerText = 'ONLINE';
-        log('tag-delivered', 'RESTORE', `Node ${id} reconnected to mesh. Flushing Store-and-Forward queues...`);
+        log('tag-delivered', 'RESTORE', `Node ${id} reconnected. Flushing queues...`);
         flushStoreAndForward(id);
       } else {
         el.className = 'node offline';
         st.innerText = 'OFFLINE';
-        log('tag-drop', 'OFFLINE', `Node ${id} disconnected from BLE mesh range.`);
+        log('tag-drop', 'OFFLINE', `Node ${id} disconnected from range.`);
       }
     }
 
     async function runTestAToE() {
       const msgId = 'msg_' + Date.now();
       stats.sent++;
-      updateStats();
-
-      log('tag-hop', 'ORIGIN', `Node A originated message: "Hello Node E across 4 hops!" (Initial TTL: 8)`);
+      log('tag-hop', 'ORIGIN', `Node A originated message: "Hello Node E across 4 hops!"`);
       seenMessages.add('A:' + msgId);
-
       await propagate(msgId, 'A', 'E', 'Hello Node E across 4 hops!', 8, 0);
     }
 
     async function runTestDirect() {
       const msgId = 'msg_dir_' + Date.now();
       stats.sent++;
-      updateStats();
-
-      log('tag-hop', 'ORIGIN', `Node A sending direct BLE frame to nearby Node B: "Direct private message A -> B"`);
-      await propagate(msgId, 'A', 'B', 'Direct private message A -> B', 8, 0);
+      log('tag-hop', 'ORIGIN', `Node A direct frame to Node B: "Direct BLE message"`);
+      await propagate(msgId, 'A', 'B', 'Direct BLE message', 8, 0);
     }
 
     async function runTestGroup() {
       const msgId = 'msg_grp_' + Date.now();
       stats.sent++;
-      updateStats();
-
-      log('tag-hop', 'GROUP', `Node A broadcast to "Delhi Community": "Delhi meetup happening now!"`);
-      await propagate(msgId, 'A', 'GROUP', 'Delhi meetup happening now!', 8, 0);
+      log('tag-hop', 'GROUP', `Node A broadcast: "Delhi Meetup happening now!"`);
+      await propagate(msgId, 'A', 'GROUP', 'Delhi Meetup happening now!', 8, 0);
     }
 
     async function propagate(msgId, currentNodeId, destNodeId, text, ttl, hopCount) {
       const neighbors = topology[currentNodeId] || [];
 
       for (const nextNodeId of neighbors) {
-        await new Promise(r => setTimeout(r, 450));
+        await new Promise(r => setTimeout(r, 380));
 
         if (!nodes[nextNodeId].online) {
-          log('tag-store', 'OFFLINE', `Node ${nextNodeId} is OFFLINE. Message buffered at Node ${currentNodeId} in Store-and-Forward queue.`);
+          log('tag-store', 'OFFLINE', `Node ${nextNodeId} OFFLINE. Buffered at Node ${currentNodeId}`);
           nodes[currentNodeId].storeQueue.push({ msgId, destNodeId, text, ttl, hopCount });
           continue;
         }
@@ -448,8 +676,7 @@
         const dedupKey = nextNodeId + ':' + msgId;
         if (seenMessages.has(dedupKey)) {
           stats.loops++;
-          updateStats();
-          log('tag-drop', 'DEDUP', `Loop prevented! Node ${nextNodeId} already processed msg ${msgId}. Dropping duplicate.`);
+          log('tag-drop', 'DEDUP', `Loop avoided! Node ${nextNodeId} dropped duplicate.`);
           continue;
         }
 
@@ -459,14 +686,12 @@
         if (isDest) {
           nodes[nextNodeId].inbox.push({ text, hops: hopCount + 1 });
           stats.delivered++;
-          updateStats();
-          log('tag-delivered', 'DELIVERED', `SUCCESS: Node ${nextNodeId} decrypted message: "${text}" (Hops: ${hopCount + 1}, TTL left: ${ttl - 1})`);
+          log('tag-delivered', 'DELIVERED', `Node ${nextNodeId} decrypted payload: "${text}" (${hopCount + 1} hops)`);
         }
 
         if (ttl > 1 && !isDest) {
           stats.relayed++;
-          updateStats();
-          log('tag-hop', 'RELAY', `Node ${nextNodeId} relaying forward... (Hop: ${hopCount + 1}, Next TTL: ${ttl - 1})`);
+          log('tag-hop', 'RELAY', `Node ${nextNodeId} relaying... (Next TTL: ${ttl - 1})`);
           propagate(msgId, nextNodeId, destNodeId, text, ttl - 1, hopCount + 1);
         }
       }
@@ -479,8 +704,7 @@
           data.storeQueue = [];
           for (const item of queue) {
             stats.flushed++;
-            updateStats();
-            log('tag-store', 'FLUSH', `Flushed buffered message from Node ${nodeId} to newly reconnected Node ${reconnectedId}`);
+            log('tag-store', 'FLUSH', `Flushed buffered queue from Node ${nodeId} to Node ${reconnectedId}`);
             propagate(item.msgId, nodeId, item.destNodeId, item.text, item.ttl, item.hopCount);
           }
         }
@@ -491,31 +715,24 @@
       document.getElementById('logBox').innerHTML = '';
       for (const k in nodes) { nodes[k].inbox = []; }
       seenMessages.clear();
-      stats = { sent: 0, relayed: 0, delivered: 0, loops: 0, flushed: 0 };
-      updateStats();
     }
 
-    function sendMobileMessage() {
-      const inp = document.getElementById('mobileInput');
+    function sendChatMessage() {
+      const inp = document.getElementById('chatInput');
       const text = inp.value.trim();
       if (!text) return;
       inp.value = '';
 
-      const body = document.getElementById('phoneChatBody');
+      const box = document.getElementById('chatMessagesBox');
       const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const div = document.createElement('div');
-      div.style.marginBottom = '10px';
-      div.style.display = 'flex';
-      div.style.flexDirection = 'column';
-      div.style.alignItems = 'flex-end';
+      div.className = 'msg-bubble msg-out';
       div.innerHTML = `
-        <div style="background:var(--surface-hi); border:1px solid rgba(0, 229, 255, 0.3); padding:10px 14px; border-radius:16px 16px 4px 16px; max-width:80%; font-size:13px;">
-          ${text}
-        </div>
-        <div style="font-size:10px; color:var(--accent); margin-top:4px;">${time} • ✓✓✓ Delivered (Mesh Relay)</div>
+        ${text}
+        <div class="msg-meta" style="color:var(--accent);">${time} • ✓✓✓ Delivered (Mesh Relay)</div>
       `;
-      body.appendChild(div);
-      body.scrollTop = body.scrollHeight;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
     }
 
     let deferredPrompt;
@@ -528,7 +745,7 @@
       if (deferredPrompt) {
         deferredPrompt.prompt();
       } else {
-        alert('QuickChat PWA is ready! You can click "Add to Home Screen" or the Install icon in your browser URL bar to install QuickChat directly on your device.');
+        alert('To install QuickChat: Tap your browser menu (⋮ / Share) and select "Add to Home Screen" or "Install App".');
       }
     }
   </script>
