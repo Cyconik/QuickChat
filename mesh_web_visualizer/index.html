@@ -23,29 +23,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
-  <script>
-    // Early Capture of PWA Install Prompt for Instant 1-Click Native Installation
-    window.deferredInstallPrompt = null;
-    window.isAppInstalled = false;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      window.deferredInstallPrompt = e;
-      console.log('[QuickChat PWA] Native install prompt captured');
-      const banner = document.getElementById('floatingInstallBanner');
-      if (banner) banner.style.display = 'flex';
-    });
-
-    window.addEventListener('appinstalled', () => {
-      window.isAppInstalled = true;
-      window.deferredInstallPrompt = null;
-      const banner = document.getElementById('floatingInstallBanner');
-      if (banner) banner.style.display = 'none';
-      const headerBtn = document.getElementById('headerInstallBtn');
-      if (headerBtn) headerBtn.style.display = 'none';
-    });
-  </script>
-  
   <style>
     :root {
       --bg: #0B0E17;
@@ -97,18 +74,6 @@
     .offline-dot { width: 7px; height: 7px; background: var(--warning); border-radius: 50%; }
     .ble-dot { width: 7px; height: 7px; background: var(--bluetooth); border-radius: 50%; box-shadow: 0 0 8px var(--bluetooth); animation: pulse 1.2s infinite; }
     @keyframes pulse { 0% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.3; transform: scale(0.9); } }
-
-    /* Floating 1-Click Install Banner */
-    .install-banner {
-      background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 77, 255, 0.25));
-      border: 1px solid var(--primary);
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2);
-    }
 
     /* Screens */
     .screen { display: none; padding: 16px; padding-bottom: 90px; flex: 1; animation: fadeIn 0.2s ease-in-out; }
@@ -174,18 +139,6 @@
       font-weight: 800;
       font-size: 12px;
       animation: pulse 1s infinite;
-    }
-
-    .relay-banner {
-      background: rgba(0, 245, 155, 0.08);
-      border: 1px dashed var(--accent);
-      border-radius: 12px;
-      padding: 10px 14px;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
     }
 
     /* Buttons */
@@ -367,7 +320,7 @@
         <img src="./app_icon.png" alt="QuickChat Logo" class="header-logo">
         <div>
           <div class="header-title">QuickChat</div>
-          <div class="header-subtitle"><span id="headerDot" class="live-dot"></span> <span id="headerStatusText">AUTO MESH ACTIVE</span></div>
+          <div class="header-subtitle"><span id="headerDot" class="live-dot"></span> <span id="headerStatusText">OFFLINE MESH ACTIVE</span></div>
         </div>
       </div>
       <div style="display:flex; gap:6px;">
@@ -375,24 +328,8 @@
           <svg class="icon-sm" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
           Mesh Link
         </button>
-        <button id="headerInstallBtn" class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">
-          <svg class="icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Install
-        </button>
       </div>
     </header>
-
-    <!-- Floating 1-Click Install Banner -->
-    <div id="floatingInstallBanner" class="install-banner">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="./app_icon.png" style="width:32px; height:32px; border-radius:8px; object-fit:cover;">
-        <div>
-          <div style="font-weight:800; font-size:13px;">Install QuickChat Native App</div>
-          <div style="font-size:10.5px; color:var(--accent);">Zero-Network Offline Ready</div>
-        </div>
-      </div>
-      <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install</button>
-    </div>
 
     <!-- ONBOARDING SCREEN -->
     <div id="onboardingView" class="screen">
@@ -430,16 +367,16 @@
           QuickChat forms an autonomous decentralized mesh chain: User A connects to B, B to C, C to D. Messages from A reach D seamlessly through intermediate phone relays!
         </p>
         <div style="display:flex; gap:8px; margin-top:14px;">
-          <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install</button>
           <button class="btn btn-sm btn-ble" onclick="openOfflinePairModal()">⚡ Mesh Link QR</button>
+          <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-groups')">👥 Groups</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-title">📡 How Multi-Hop Chain Routing Works:</div>
         <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li><strong>Step 1: Pair Chain (A ➔ B, B ➔ C, C ➔ D):</strong> Use QR or Hotspot. Each phone acts as a relay station.</li>
-          <li><strong>Step 2: Send Message:</strong> User A types message for D (or group). Phone A transmits packet to Phone B.</li>
+          <li><strong>Step 1: Pair Chain (A ➔ B, B ➔ C, C ➔ D):</strong> Tap <em>"Mesh Link"</em>. Node 1 taps "Create Offer QR", Node 2 scans it. Live WebRTC DataChannel connects!</li>
+          <li><strong>Step 2: Send Message:</strong> User A types message for D (or group). Phone A transmits packet to Phone B via the open DataChannel.</li>
           <li><strong>Step 3: Autonomous Forwarding:</strong> Phone B routes to C, Phone C routes to D. Zero internet or central server needed!</li>
           <li><strong>Step 4: Realtime ACK & Alert:</strong> Phone D chimes 🔔, vibrates, and sends instant delivery receipt back to A.</li>
         </ol>
@@ -465,12 +402,12 @@
           <div style="font-weight:800; font-size:13px; color:var(--primary); display:flex; align-items:center; gap:6px;">
             <span>🌐 Live Multi-Hop Mesh Chain</span>
           </div>
-          <span style="font-size:10.5px; background:rgba(0, 229, 255, 0.2); color:var(--primary); padding:2px 6px; border-radius:6px; font-weight:700;" id="activeLinksCountBadge">0 Direct Links</span>
+          <span style="font-size:10.5px; background:rgba(0, 229, 255, 0.2); color:var(--primary); padding:2px 6px; border-radius:6px; font-weight:700;" id="activeLinksCountBadge">0 Direct WebRTC Links</span>
         </div>
         <div class="mesh-chain-nodes" id="meshChainVisualizerBox">
           <div class="mesh-chain-node">📍 You (Node A)</div>
           <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Node B (Relay)</div>
+          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Scan QR to Link Node B</div>
           <div class="mesh-chain-link">➔➔</div>
           <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Node C (Relay)</div>
           <div class="mesh-chain-link">➔➔</div>
@@ -582,17 +519,6 @@
       </div>
 
       <div class="card">
-        <div class="card-title">PWA & Offline Installation</div>
-        <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
-          Install QuickChat directly to your home screen so it works 100% offline without cellular or Wi-Fi connection.
-        </p>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <button class="btn btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
-          <button class="btn btn-secondary" onclick="downloadStandaloneHtml()">💾 Download Single-File (.html)</button>
-        </div>
-      </div>
-
-      <div class="card">
         <div class="card-title">Audio & Vibration Alerts</div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
           <div>
@@ -654,57 +580,66 @@
     </div>
   </div>
 
-  <!-- OFFLINE ZERO-INTERNET MULTI-HOP PAIRING MODAL -->
+  <!-- OFFLINE ZERO-INTERNET REAL WEBRTC MULTI-HOP PAIRING MODAL -->
   <div id="offlinePairModal" class="modal-overlay">
     <div class="modal-content">
       <div class="card-title">
-        <span style="font-size:16px;">⚡ Multi-Hop Mesh Chain Linker</span>
+        <span style="font-size:16px;">⚡ Offline WebRTC DataChannel Linker</span>
         <button class="btn btn-sm btn-secondary" onclick="closeOfflinePairModal()">✕</button>
       </div>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
-        Connect this device to a nearby node to form the chain (A ➔ B ➔ C ➔ D):
+        Connects 2 phones directly via raw peer-to-peer WebRTC sockets with ZERO internet:
       </p>
 
       <div style="display:flex; gap:6px; margin-bottom:14px;">
-        <button class="btn btn-sm btn-accent" style="flex:1;" onclick="showQrTab('my-qr')">Show Mesh QR</button>
-        <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="showQrTab('scan-qr')">Scan Node QR</button>
-        <button class="btn btn-sm btn-ble" style="flex:1;" onclick="startWebBluetoothScan()">Bluetooth BLE</button>
+        <button class="btn btn-sm btn-accent" id="tabBtnCreateOffer" style="flex:1;" onclick="startOfferCreationFlow()">1. Create Link (Node 1)</button>
+        <button class="btn btn-sm btn-secondary" id="tabBtnScanOffer" style="flex:1;" onclick="startScanOfferFlow()">2. Scan & Accept (Node 2)</button>
       </div>
 
-      <div id="qrDisplaySection" style="text-align:center; padding:10px 0;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Have your neighbor scan this QR:</div>
-        <div id="qrcodeBox" style="display:inline-block; background:#FFF; padding:12px; border-radius:12px;"></div>
-        <div style="font-size:11px; color:var(--text-muted); margin-top:8px;" id="qrPeerIdText">ID: ...</div>
+      <!-- Step 1: Offer Display -->
+      <div id="pairOfferSection" style="text-align:center; padding:10px 0;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px; color:var(--primary);" id="offerStatusTitle">Generating WebRTC Offer...</div>
+        <div id="qrcodeOfferBox" style="display:inline-block; background:#FFF; padding:12px; border-radius:12px; min-width:180px; min-height:180px;"></div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">Have Node 2 scan this QR or paste the code.</div>
+        
+        <div style="margin-top:12px; text-align:left;">
+          <label style="font-size:10.5px; font-weight:700; color:var(--text-muted);">OFFER LINK CODE (COMPACT):</label>
+          <textarea id="offerCodeTextarea" class="input-field" style="height:60px; font-family:'JetBrains Mono', monospace; font-size:10px; margin-top:4px;" readonly onclick="this.select()"></textarea>
+          <button class="btn btn-sm btn-secondary" onclick="copyOfferCode()">📋 Copy Offer Code</button>
+        </div>
+
+        <div style="margin-top:14px; border-top:1px solid var(--surface-light); padding-top:12px; text-align:left;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent);">PASTE ANSWER FROM NODE 2:</label>
+          <textarea id="answerInputTextarea" class="input-field" placeholder="Paste Node 2 Answer here or scan below..." style="height:50px; font-family:'JetBrains Mono', monospace; font-size:10px; margin-top:4px;"></textarea>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm btn-accent" style="flex:1;" onclick="applyAnswerFromNode2()">⚡ Complete Link</button>
+            <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="startScanAnswerFlow()">📷 Scan Answer QR</button>
+          </div>
+        </div>
       </div>
 
-      <div id="qrScanSection" style="display:none; text-align:center;">
+      <!-- Step 2: Camera Scanner for Offer or Answer -->
+      <div id="pairCameraScanSection" style="display:none; text-align:center;">
         <div id="qrReader" style="width:100%; border-radius:12px; overflow:hidden;"></div>
-        <button class="btn btn-sm btn-secondary" style="margin-top:10px;" onclick="stopQrScanner()">Stop Camera Scanner</button>
+        <button class="btn btn-sm btn-secondary" style="margin-top:10px;" onclick="stopQrScanner()">✕ Stop Camera</button>
       </div>
 
-      <div class="install-step-box" style="margin-top:14px;">
-        <div class="step-num">🔗</div>
-        <div style="font-size:11.5px; line-height:1.4;">
-          <strong>How 1-to-All works:</strong> Once you link to Peer B, and Peer B links to Peer C, messages sent to Peer C will automatically route through Peer B seamlessly!
+      <!-- Step 3: Answer Display for Node 2 -->
+      <div id="pairAnswerSection" style="display:none; text-align:center; padding:10px 0;">
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:8px; color:var(--accent);">✅ Answer Ready! Have Node 1 Scan:</div>
+        <div id="qrcodeAnswerBox" style="display:inline-block; background:#FFF; padding:12px; border-radius:12px; min-width:180px; min-height:180px;"></div>
+        <div style="margin-top:12px; text-align:left;">
+          <label style="font-size:10.5px; font-weight:700; color:var(--text-muted);">ANSWER CODE:</label>
+          <textarea id="answerCodeTextarea" class="input-field" style="height:60px; font-family:'JetBrains Mono', monospace; font-size:10px; margin-top:4px;" readonly onclick="this.select()"></textarea>
+          <button class="btn btn-sm btn-secondary" onclick="copyAnswerCode()">📋 Copy Answer Code</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SMART INSTALL MODAL -->
-  <div id="installGuideModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="card-title">
-        <span style="font-size:16px;">📲 Install QuickChat App</span>
-        <button class="btn btn-sm btn-secondary" onclick="closeInstallGuide()">✕</button>
-      </div>
-      <div id="installModalDynamicContent"></div>
-    </div>
-  </div>
-
   <script>
     // ----------------------------------------------------
-    // DECENTRALIZED MULTI-HOP MESH CHAIN ENGINE (A ➔ B ➔ C ➔ D)
+    // SERVERLESS WEBRTC DATACHANNEL MESH ENGINE (A ➔ B ➔ C ➔ D)
     // ----------------------------------------------------
     const MQTT_BROKER_HOST = 'broker.emqx.io';
     const MQTT_BROKER_PORT = 8084;
@@ -720,9 +655,14 @@
     let totalRelayedCount = 0;
     let qrScanner = null;
 
-    // Loop prevention and mesh routing table
+    // ACTIVE P2P WEBRTC DATACHANNELS (Works 100% Offline with zero internet)
+    let activeWebRtcChannels = new Map(); // peerId -> { peerConnection, dataChannel, peerInfo }
+    let pendingPeerConnection = null;
+    let pendingDataChannel = null;
+
+    // Mesh routing table
     let seenPacketIds = new Set();
-    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline, hopsAway, routeVia }
+    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline, hopsAway }
     let directMeshLinks = new Map(); // peerId -> { id, displayName, type: 'webrtc'|'local'|'ble' }
 
     // DEFAULT ACTIVE PUBLIC MESH GROUPS
@@ -736,115 +676,7 @@
     let pendingMeshQueue = [];
     let relayBuffer = [];
 
-    // 1. DIRECT 1-CLICK PWA INSTALLATION TRIGGER
-    async function performDirect1ClickInstall() {
-      if (window.deferredInstallPrompt) {
-        window.deferredInstallPrompt.prompt();
-        const choice = await window.deferredInstallPrompt.userChoice;
-        if (choice && choice.outcome === 'accepted') {
-          showToastNotification('QuickChat', '🎉 App installed successfully! Ready for 100% offline use.');
-          const banner = document.getElementById('floatingInstallBanner');
-          if (banner) banner.style.display = 'none';
-        }
-        window.deferredInstallPrompt = null;
-        return;
-      }
-
-      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || window.isAppInstalled) {
-        alert('✅ QuickChat is already installed on this device!');
-        return;
-      }
-
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      const isInApp = /FBAN|FBAV|Instagram|WhatsApp|Telegram|Line|Twitter/i.test(navigator.userAgent);
-      renderSmartInstallModal(isIOS, isInApp);
-      document.getElementById('installGuideModal').classList.add('active');
-    }
-
-    function renderSmartInstallModal(isIOS, isInApp) {
-      const container = document.getElementById('installModalDynamicContent');
-      if (isInApp) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:10px 0;">
-            <div style="font-size:36px; margin-bottom:8px;">🌐</div>
-            <div style="font-weight:800; font-size:15px; margin-bottom:6px;">In-App Browser Detected</div>
-            <p style="font-size:12.5px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
-              You are currently viewing inside an in-app browser. To 1-click install the standalone app:
-            </p>
-          </div>
-          <div class="install-step-box">
-            <div class="step-num">1</div>
-            <div style="font-size:12.5px;">Tap the <strong>3 dots (⋮)</strong> at top right and choose <strong>"Open in Chrome / Safari"</strong>.</div>
-          </div>
-          <div class="install-step-box">
-            <div class="step-num">2</div>
-            <div style="font-size:12.5px;">Then tap the <strong>"Install App"</strong> button for instant 1-click installation!</div>
-          </div>
-          <button class="btn btn-accent" style="margin-top:12px;" onclick="copyAppUrl()">📋 Copy Link to Clipboard</button>
-        `;
-      } else if (isIOS) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:10px 0;">
-            <img src="./app_icon.png" style="width:52px; height:52px; border-radius:12px; margin-bottom:8px;">
-            <div style="font-weight:800; font-size:15px; margin-bottom:4px;">Install on iPhone / iPad</div>
-            <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">2 quick taps to add QuickChat to your home screen:</p>
-          </div>
-          <div class="install-step-box">
-            <div class="step-num">1</div>
-            <div style="font-size:12.5px;">Tap the <strong>Share button (⎋)</strong> at the bottom of Safari.</div>
-          </div>
-          <div class="install-step-box">
-            <div class="step-num">2</div>
-            <div style="font-size:12.5px;">Scroll down and tap <strong>"Add to Home Screen (➕)"</strong>.</div>
-          </div>
-          <button class="btn btn-accent" style="margin-top:12px;" onclick="closeInstallGuide()">Got It!</button>
-        `;
-      } else {
-        container.innerHTML = `
-          <div style="text-align:center; padding:10px 0;">
-            <img src="./app_icon.png" style="width:52px; height:52px; border-radius:12px; margin-bottom:8px;">
-            <div style="font-weight:800; font-size:15px; margin-bottom:4px;">Instant Offline Install</div>
-            <p style="font-size:12.5px; color:var(--text-muted); line-height:1.5;">
-              Tap <strong>"Install"</strong> when prompted, or choose <strong>"Install app"</strong> from Chrome menu.
-            </p>
-          </div>
-          <button class="btn btn-accent" style="margin-top:8px;" onclick="triggerChromeInstallDirect()">⚡ Try Direct Install Prompt</button>
-          <button class="btn btn-secondary" style="margin-top:8px;" onclick="downloadStandaloneHtml()">💾 Download Single-File App</button>
-        `;
-      }
-    }
-
-    function triggerChromeInstallDirect() {
-      if (window.deferredInstallPrompt) {
-        window.deferredInstallPrompt.prompt();
-        closeInstallGuide();
-      } else {
-        alert('Please tap the 3 dots (⋮) in Chrome and select "Install app" / "Add to Home Screen".');
-        closeInstallGuide();
-      }
-    }
-
-    function copyAppUrl() {
-      navigator.clipboard.writeText(window.location.href);
-      alert('Link copied! Open Chrome or Safari and paste the link to install in 1 click.');
-      closeInstallGuide();
-    }
-
-    function closeInstallGuide() {
-      document.getElementById('installGuideModal').classList.remove('active');
-    }
-
-    function downloadStandaloneHtml() {
-      const htmlContent = document.documentElement.outerHTML;
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'QuickChat-Offline-App.html';
-      a.click();
-      showToastNotification('QuickChat', '📥 Offline HTML file downloaded! You can open it anytime offline.');
-    }
-
-    // 2. Audio Notification Engine (Plays on EVERY Single Message)
+    // 1. Audio Notification Engine (Plays on EVERY Single Message)
     function playMessageChime() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -893,7 +725,7 @@
       document.getElementById('notificationToast').classList.remove('show');
     }
 
-    // 3. Autonomous Multi-Hop Mesh Relay Engine
+    // 2. Autonomous Multi-Hop Mesh Relay Engine
     function toggleMeshRelay() {
       isMeshRelayEnabled = !isMeshRelayEnabled;
       const btn = document.getElementById('toggleRelayBtn');
@@ -924,7 +756,7 @@
       }
     }
 
-    // 4. Service Worker PWA Offline Registration
+    // 3. Service Worker PWA Offline Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(() => {
@@ -933,7 +765,7 @@
       });
     }
 
-    // 5. Network Online / Offline Detection
+    // 4. Network Online / Offline Detection
     window.addEventListener('online', () => {
       document.getElementById('headerDot').className = 'live-dot';
       document.getElementById('headerStatusText').innerText = 'LIVE GLOBAL MESH';
@@ -946,7 +778,7 @@
       document.getElementById('headerStatusText').innerText = 'OFFLINE MESH CHAIN';
     });
 
-    // 6. Initialize App
+    // 5. Initialize App
     window.addEventListener('DOMContentLoaded', () => {
       loadStoredIdentity();
       loadStoredChats();
@@ -1011,7 +843,7 @@
       document.getElementById('profileAvatar').innerText = currentUser.displayName.charAt(0).toUpperCase();
     }
 
-    // 7. Global Realtime MQTT WebSocket Bridge
+    // 6. Global Realtime MQTT WebSocket Bridge (Optional WAN Relay)
     function initGlobalMqttRelay() {
       if (typeof Paho === 'undefined') return;
       const clientId = 'qc_client_' + Math.random().toString(36).substring(2, 10);
@@ -1024,7 +856,6 @@
           useSSL: true,
           timeout: 8,
           onSuccess: () => {
-            console.log('[Mesh Gateway] Connected to Global Realtime WebSocket Relay');
             mqttClient.subscribe(MQTT_MESH_TOPIC);
             document.getElementById('headerDot').className = 'live-dot';
             document.getElementById('headerStatusText').innerText = 'LIVE GLOBAL MESH';
@@ -1045,9 +876,7 @@
     function onMqttDisconnect() {
       document.getElementById('headerDot').className = 'offline-dot';
       document.getElementById('headerStatusText').innerText = 'OFFLINE MESH CHAIN';
-      if (navigator.onLine) {
-        setTimeout(initGlobalMqttRelay, 5000);
-      }
+      if (navigator.onLine) setTimeout(initGlobalMqttRelay, 5000);
     }
 
     function onMqttMessage(message) {
@@ -1057,7 +886,7 @@
       } catch (e) {}
     }
 
-    // 8. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
+    // 7. Local BroadcastChannel & Storage Event Listeners (For same-device / multi-tab)
     function initLocalBroadcast() {
       try {
         localBroadcastChannel = new BroadcastChannel('quickchat_p2p_mesh_v2');
@@ -1078,7 +907,7 @@
       });
     }
 
-    // 9. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
+    // 8. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
     function startRealtimeDiscoveryLoop() {
       setInterval(() => {
         if (!currentUser) return;
@@ -1112,10 +941,23 @@
       transmitPacket(presencePacket);
     }
 
+    // 9. CENTRAL PACKET TRANSMITTER OVER LIVE WEBRTC DATACHANNELS + ALL MESH LINKS
     function transmitPacket(packet) {
       const json = JSON.stringify(packet);
 
-      // 1. MQTT Online WSS Relay
+      // 1. TRANSMIT ACROSS ALL DIRECT OFFLINE WEBRTC DATACHANNELS (WORKS 100% OFFLINE!)
+      for (const [peerId, entry] of activeWebRtcChannels.entries()) {
+        if (entry.dataChannel && entry.dataChannel.readyState === 'open') {
+          try {
+            entry.dataChannel.send(json);
+            console.log('[WebRTC Mesh] Packet sent over DataChannel to:', peerId);
+          } catch (err) {
+            console.warn('DataChannel send error:', err);
+          }
+        }
+      }
+
+      // 2. MQTT Online WSS Relay (if internet available)
       if (mqttClient && mqttClient.isConnected()) {
         try {
           const msg = new Paho.MQTT.Message(json);
@@ -1124,12 +966,12 @@
         } catch (_) {}
       }
 
-      // 2. BroadcastChannel Offline P2P
+      // 3. Local BroadcastChannel
       if (localBroadcastChannel) {
         try { localBroadcastChannel.postMessage(packet); } catch (_) {}
       }
 
-      // 3. Storage Event Trigger
+      // 4. Storage Event Trigger
       try {
         localStorage.setItem('qc_raw_mesh_packet', json);
       } catch (_) {}
@@ -1153,7 +995,7 @@
       if (packet.type === 'PEER_HEARTBEAT') {
         const peer = packet.peer;
         if (peer.id !== currentUser.id) {
-          const isDirect = directMeshLinks.has(peer.id);
+          const isDirect = directMeshLinks.has(peer.id) || activeWebRtcChannels.has(peer.id);
           discoveredPeers.set(peer.id, {
             ...peer,
             lastSeen: Date.now(),
@@ -1244,7 +1086,6 @@
         const { messageId, recipientId, destinationId } = packet;
         onMessageAckReceived(messageId, recipientId);
 
-        // Forward ACK back along the chain if we are an intermediate node
         if (isMeshRelayEnabled && destinationId && destinationId !== currentUser.id) {
           setTimeout(() => transmitPacket(packet), 40);
         }
@@ -1256,7 +1097,7 @@
       let changed = false;
       for (const [id, peer] of discoveredPeers.entries()) {
         if (now - peer.lastSeen > 8000) {
-          if (peer.isOnline) {
+          if (peer.isOnline && !activeWebRtcChannels.has(id)) {
             peer.isOnline = false;
             changed = true;
           }
@@ -1309,8 +1150,8 @@
       const container = document.getElementById('meshChainVisualizerBox');
       const countBadge = document.getElementById('activeLinksCountBadge');
       
-      const directCount = directMeshLinks.size;
-      countBadge.innerText = `${directCount} Direct Links • ${discoveredPeers.size} Chain Nodes`;
+      const directCount = activeWebRtcChannels.size + directMeshLinks.size;
+      countBadge.innerText = `${activeWebRtcChannels.size} WebRTC Links • ${discoveredPeers.size} Nodes`;
 
       if (discoveredPeers.size === 0 && directCount === 0) {
         container.innerHTML = `
@@ -1327,11 +1168,12 @@
 
       let html = `<div class="mesh-chain-node" style="border-color:var(--accent);">📍 You (${currentUser.displayName})</div>`;
       for (const [id, peer] of discoveredPeers.entries()) {
-        const isDirect = directMeshLinks.has(id);
+        const isRtc = activeWebRtcChannels.has(id);
+        const isDirect = directMeshLinks.has(id) || isRtc;
         html += `
-          <div class="mesh-chain-link">⚡➔</div>
-          <div class="mesh-chain-node" style="${isDirect ? 'border-color:var(--primary);' : 'border-color:var(--secondary);'}">
-            ${peer.displayName} ${isDirect ? '⚡' : '🔗'}
+          <div class="mesh-chain-link">${isRtc ? '⚡🟢' : '➔➔'}</div>
+          <div class="mesh-chain-node" style="${isRtc ? 'border-color:var(--accent); color:var(--accent); font-weight:800;' : (isDirect ? 'border-color:var(--primary);' : 'border-color:var(--secondary);')}">
+            ${peer.displayName} ${isRtc ? '⚡' : '🔗'}
           </div>
         `;
       }
@@ -1349,7 +1191,7 @@
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
             <div class="empty-title">Scanning for Multi-Hop Mesh Nodes...</div>
             <div class="empty-desc">
-              Tap <strong>"Mesh Link"</strong> at the top to connect via QR/Bluetooth, or join <strong>#Nearby-Public-Mesh</strong> to chat across the chain.
+              Tap <strong>"Mesh Link"</strong> at the top to connect via QR DataChannels, or join <strong>#Nearby-Public-Mesh</strong> to chat across the chain.
             </div>
           </div>
         `;
@@ -1358,17 +1200,18 @@
 
       let html = '';
       for (const [id, peer] of discoveredPeers.entries()) {
-        const isOnline = peer.isOnline;
-        const isDirect = directMeshLinks.has(id);
+        const isRtc = activeWebRtcChannels.has(id);
+        const isOnline = peer.isOnline || isRtc;
+        const isDirect = directMeshLinks.has(id) || isRtc;
         html += `
           <div class="peer-item">
             <div class="peer-item-left">
-              <div class="peer-avatar ${isDirect ? '' : 'ble-avatar'}">${peer.displayName.charAt(0).toUpperCase()}</div>
+              <div class="peer-avatar ${isRtc ? '' : 'ble-avatar'}">${peer.displayName.charAt(0).toUpperCase()}</div>
               <div>
                 <div class="peer-name">${peer.displayName}</div>
                 <div class="peer-sub">
                   <span class="${isOnline ? 'live-dot' : 'offline-dot'}" style="width:6px; height:6px;"></span>
-                  @${peer.username} • <span style="color:${isDirect ? 'var(--primary)' : 'var(--accent)'}; font-weight:bold;">${isDirect ? '⚡ Direct Linked Node' : '🔗 Multi-Hop Chain Route'}</span>
+                  @${peer.username} • <span style="color:${isRtc ? 'var(--accent)' : (isDirect ? 'var(--primary)' : 'var(--warning)')}; font-weight:bold;">${isRtc ? '⚡ Live WebRTC Socket' : (isDirect ? '⚡ Direct Linked Node' : '🔗 Multi-Hop Chain Route')}</span>
                 </div>
               </div>
             </div>
@@ -1709,10 +1552,10 @@
       container.innerHTML = html;
     }
 
-    // 14. OFFLINE ZERO-INTERNET MULTI-HOP PAIRING ENGINE (QR + Web Bluetooth)
+    // 14. SERVERLESS WEBRTC DATACHANNEL ENGINE (ZERO-INTERNET P2P LINK)
     function openOfflinePairModal() {
       document.getElementById('offlinePairModal').classList.add('active');
-      generateMyQrCode();
+      startOfferCreationFlow();
     }
 
     function closeOfflinePairModal() {
@@ -1720,90 +1563,305 @@
       stopQrScanner();
     }
 
-    function showQrTab(tab) {
-      if (tab === 'my-qr') {
-        document.getElementById('qrDisplaySection').style.display = 'block';
-        document.getElementById('qrScanSection').style.display = 'none';
-        stopQrScanner();
-        generateMyQrCode();
-      } else if (tab === 'scan-qr') {
-        document.getElementById('qrDisplaySection').style.display = 'none';
-        document.getElementById('qrScanSection').style.display = 'block';
-        startQrScanner();
+    async function startOfferCreationFlow() {
+      document.getElementById('pairOfferSection').style.display = 'block';
+      document.getElementById('pairCameraScanSection').style.display = 'none';
+      document.getElementById('pairAnswerSection').style.display = 'none';
+      document.getElementById('tabBtnCreateOffer').className = 'btn btn-sm btn-accent';
+      document.getElementById('tabBtnScanOffer').className = 'btn btn-sm btn-secondary';
+      stopQrScanner();
+
+      document.getElementById('offerStatusTitle').innerText = 'Generating Local WebRTC Offer...';
+      try {
+        const offerPayloadStr = await createWebRtcOffer();
+        document.getElementById('offerCodeTextarea').value = offerPayloadStr;
+        renderQrInto('qrcodeOfferBox', offerPayloadStr);
+        document.getElementById('offerStatusTitle').innerText = '✅ Node 1 Offer Ready! Scan with Node 2:';
+      } catch (err) {
+        document.getElementById('offerStatusTitle').innerText = 'Error generating offer: ' + err.message;
       }
     }
 
-    function generateMyQrCode() {
-      if (!currentUser) return;
-      const box = document.getElementById('qrcodeBox');
-      box.innerHTML = '';
-      document.getElementById('qrPeerIdText').innerText = `ID: ${currentUser.id} • @${currentUser.username}`;
-      const payload = JSON.stringify({
-        id: currentUser.id,
-        username: currentUser.username,
-        displayName: currentUser.displayName,
-        pub: currentUser.publicKey,
-        time: Date.now()
+    function startScanOfferFlow() {
+      document.getElementById('pairOfferSection').style.display = 'none';
+      document.getElementById('pairCameraScanSection').style.display = 'block';
+      document.getElementById('pairAnswerSection').style.display = 'none';
+      document.getElementById('tabBtnCreateOffer').className = 'btn btn-sm btn-secondary';
+      document.getElementById('tabBtnScanOffer').className = 'btn btn-sm btn-accent';
+
+      startQrScanner(async (decodedText) => {
+        try {
+          const parsed = JSON.parse(decodedText);
+          if (parsed.type === 'QC_OFFER') {
+            stopQrScanner();
+            document.getElementById('pairCameraScanSection').style.display = 'none';
+            document.getElementById('pairAnswerSection').style.display = 'block';
+            
+            const answerPayloadStr = await handleOfferAndCreateAnswer(decodedText);
+            document.getElementById('answerCodeTextarea').value = answerPayloadStr;
+            renderQrInto('qrcodeAnswerBox', answerPayloadStr);
+          } else {
+            alert('Scanned QR is not a QuickChat Offer.');
+          }
+        } catch (_) {
+          alert('Invalid QR data.');
+        }
       });
+    }
+
+    function startScanAnswerFlow() {
+      document.getElementById('pairOfferSection').style.display = 'none';
+      document.getElementById('pairCameraScanSection').style.display = 'block';
+      document.getElementById('pairAnswerSection').style.display = 'none';
+
+      startQrScanner(async (decodedText) => {
+        try {
+          const parsed = JSON.parse(decodedText);
+          if (parsed.type === 'QC_ANSWER') {
+            stopQrScanner();
+            await applyAnswer(decodedText);
+          } else {
+            alert('Scanned QR is not a QuickChat Answer.');
+          }
+        } catch (_) {
+          alert('Invalid Answer QR.');
+        }
+      });
+    }
+
+    async function applyAnswerFromNode2() {
+      const code = document.getElementById('answerInputTextarea').value.trim();
+      if (!code) {
+        alert('Please paste the Answer code from Node 2.');
+        return;
+      }
+      await applyAnswer(code);
+    }
+
+    // Core WebRTC PeerConnection Setup
+    async function createWebRtcOffer() {
+      if (pendingPeerConnection) {
+        try { pendingPeerConnection.close(); } catch (_) {}
+      }
+
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
+      pendingPeerConnection = pc;
+
+      const dc = pc.createDataChannel('quickchat_mesh_p2p', { ordered: true });
+      pendingDataChannel = dc;
+      setupDataChannel(dc, null);
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      await waitForIceGathering(pc);
+
+      const payload = {
+        type: 'QC_OFFER',
+        sender: {
+          id: currentUser.id,
+          username: currentUser.username,
+          displayName: currentUser.displayName,
+          publicKey: currentUser.publicKey
+        },
+        sdp: pc.localDescription
+      };
+
+      return JSON.stringify(payload);
+    }
+
+    async function handleOfferAndCreateAnswer(offerJsonStr) {
+      const offerPayload = typeof offerJsonStr === 'string' ? JSON.parse(offerJsonStr) : offerJsonStr;
+      if (pendingPeerConnection) {
+        try { pendingPeerConnection.close(); } catch (_) {}
+      }
+
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
+      pendingPeerConnection = pc;
+
+      pc.ondatachannel = (event) => {
+        const dc = event.channel;
+        setupDataChannel(dc, offerPayload.sender);
+        activeWebRtcChannels.set(offerPayload.sender.id, {
+          peerConnection: pc,
+          dataChannel: dc,
+          peerInfo: offerPayload.sender
+        });
+        onWebRtcConnected(offerPayload.sender);
+      };
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offerPayload.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      await waitForIceGathering(pc);
+
+      const answerPayload = {
+        type: 'QC_ANSWER',
+        sender: {
+          id: currentUser.id,
+          username: currentUser.username,
+          displayName: currentUser.displayName,
+          publicKey: currentUser.publicKey
+        },
+        sdp: pc.localDescription
+      };
+
+      return JSON.stringify(answerPayload);
+    }
+
+    async function applyAnswer(answerJsonStr) {
+      try {
+        const answerPayload = typeof answerJsonStr === 'string' ? JSON.parse(answerJsonStr) : answerJsonStr;
+        if (pendingPeerConnection && pendingDataChannel) {
+          await pendingPeerConnection.setRemoteDescription(new RTCSessionDescription(answerPayload.sdp));
+          activeWebRtcChannels.set(answerPayload.sender.id, {
+            peerConnection: pendingPeerConnection,
+            dataChannel: pendingDataChannel,
+            peerInfo: answerPayload.sender
+          });
+          setupDataChannel(pendingDataChannel, answerPayload.sender);
+          onWebRtcConnected(answerPayload.sender);
+          closeOfflinePairModal();
+        }
+      } catch (err) {
+        alert('Connection error: ' + err.message);
+      }
+    }
+
+    function setupDataChannel(dc, peerInfo) {
+      dc.onopen = () => {
+        console.log('[WebRTC Mesh] DataChannel OPENED!', peerInfo);
+        if (peerInfo) {
+          onWebRtcConnected(peerInfo);
+        }
+        // Send initial handshake ping
+        try {
+          dc.send(JSON.stringify({
+            type: 'PEER_HEARTBEAT',
+            packetId: 'init_' + currentUser.id + '_' + Date.now(),
+            peer: {
+              id: currentUser.id,
+              username: currentUser.username,
+              displayName: currentUser.displayName,
+              publicKey: currentUser.publicKey,
+              lastSeen: Date.now()
+            },
+            chainRoute: Array.from(directMeshLinks.keys()),
+            knownGroups: groupsList.filter(g => !defaultGroups.some(d => d.id === g.id))
+          }));
+        } catch (_) {}
+      };
+
+      dc.onmessage = (event) => {
+        try {
+          const packet = JSON.parse(event.data);
+          console.log('[WebRTC Mesh] Received packet over DataChannel:', packet);
+          handleIncomingPacket(packet);
+        } catch (e) {
+          console.warn('[WebRTC Mesh] Packet parse error:', e);
+        }
+      };
+
+      dc.onclose = () => {
+        console.log('[WebRTC Mesh] DataChannel Closed');
+        if (peerInfo) {
+          activeWebRtcChannels.delete(peerInfo.id);
+          renderPeersList();
+          renderMeshChainVisualizer();
+        }
+      };
+    }
+
+    function onWebRtcConnected(peer) {
+      directMeshLinks.set(peer.id, { id: peer.id, displayName: peer.displayName, type: 'webrtc' });
+      saveDirectMeshLinks();
+
+      discoveredPeers.set(peer.id, {
+        id: peer.id,
+        username: peer.username,
+        displayName: peer.displayName,
+        publicKey: peer.publicKey,
+        lastSeen: Date.now(),
+        isOnline: true,
+        isDirectLink: true,
+        hopsAway: 1
+      });
+      saveCachedPeers();
+      renderPeersList();
+      renderMeshChainVisualizer();
+      showToastNotification(peer.displayName, '⚡ 100% Offline WebRTC Mesh Link Connected!');
+      playMessageChime();
+      broadcastPresence();
+      openChatRoom(peer.id, peer.displayName, false);
+    }
+
+    function waitForIceGathering(pc) {
+      return new Promise((resolve) => {
+        if (pc.iceGatheringState === 'complete') {
+          resolve();
+          return;
+        }
+        let finished = false;
+        const complete = () => {
+          if (!finished) {
+            finished = true;
+            resolve();
+          }
+        };
+        pc.addEventListener('icegatheringstatechange', () => {
+          if (pc.iceGatheringState === 'complete') complete();
+        });
+        pc.addEventListener('icecandidate', (e) => {
+          if (!e.candidate) complete();
+        });
+        setTimeout(complete, 1200); // gather host & local candidates
+      });
+    }
+
+    function renderQrInto(elementId, text) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.innerHTML = '';
       if (typeof QRCode !== 'undefined') {
-        new QRCode(box, {
-          text: payload,
-          width: 170,
-          height: 170,
+        new QRCode(el, {
+          text: text,
+          width: 220,
+          height: 220,
           colorDark: "#000000",
           colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.M
+          correctLevel: QRCode.CorrectLevel.L
         });
       }
     }
 
-    function startQrScanner() {
+    function startQrScanner(onSuccessCallback) {
       if (typeof Html5Qrcode === 'undefined') {
-        alert('Scanner library loading, please try again in a second.');
+        alert('Scanner library loading, please try again.');
         return;
       }
-      qrScanner = new Html5Qrcode("qrReader");
-      qrScanner.start(
+      stopQrScanner();
+      const html5QrCode = new Html5Qrcode("qrReader");
+      qrScanner = html5QrCode;
+      html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 220, height: 220 } },
-        (decodedText) => {
-          try {
-            const peerData = JSON.parse(decodedText);
-            if (peerData.id && peerData.displayName) {
-              // Add to direct mesh links
-              directMeshLinks.set(peerData.id, {
-                id: peerData.id,
-                displayName: peerData.displayName,
-                type: 'qr_direct'
-              });
-              saveDirectMeshLinks();
-
-              discoveredPeers.set(peerData.id, {
-                id: peerData.id,
-                username: peerData.username || 'peer',
-                displayName: peerData.displayName,
-                publicKey: peerData.pub || '',
-                lastSeen: Date.now(),
-                isOnline: true,
-                isDirectLink: true,
-                hopsAway: 1
-              });
-              saveCachedPeers();
-              renderPeersList();
-              renderMeshChainVisualizer();
-              stopQrScanner();
-              closeOfflinePairModal();
-              showToastNotification(peerData.displayName, '⚡ Node Linked into Multi-Hop Chain!');
-              broadcastPresence();
-              openChatRoom(peerData.id, peerData.displayName, false);
-            }
-          } catch (_) {
-            alert('Scanned QR data: ' + decodedText);
-          }
-        },
+        { fps: 15, qrbox: { width: 240, height: 240 } },
+        onSuccessCallback,
         () => {}
       ).catch(err => {
-        console.log('Camera error:', err);
+        console.log('Environment camera error, attempting default camera:', err);
+        html5QrCode.start(
+          { facingMode: "user" },
+          { fps: 15, qrbox: { width: 240, height: 240 } },
+          onSuccessCallback,
+          () => {}
+        ).catch(e => {
+          alert('Camera permission denied. You can copy & paste the code directly.');
+        });
       });
     }
 
@@ -1816,44 +1874,16 @@
       }
     }
 
-    async function startWebBluetoothScan() {
-      if (!navigator.bluetooth) {
-        alert('Web Bluetooth is supported on Android Chrome. Please ensure Bluetooth is ON in device settings.');
-        return;
-      }
-      try {
-        const device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true
-        });
-        if (device) {
-          const blePeerId = 'ble_' + (device.id || Math.random().toString(36).substring(2, 8));
-          directMeshLinks.set(blePeerId, {
-            id: blePeerId,
-            displayName: device.name || 'Bluetooth BLE Node',
-            type: 'ble'
-          });
-          saveDirectMeshLinks();
+    function copyOfferCode() {
+      const code = document.getElementById('offerCodeTextarea').value;
+      navigator.clipboard.writeText(code);
+      alert('Offer code copied! Send/paste to Node 2.');
+    }
 
-          discoveredPeers.set(blePeerId, {
-            id: blePeerId,
-            username: (device.name || 'ble_device').toLowerCase().replace(/\s+/g, '_'),
-            displayName: device.name || 'Bluetooth BLE Node',
-            publicKey: 'ble_key',
-            lastSeen: Date.now(),
-            isOnline: true,
-            isDirectLink: true,
-            hopsAway: 1
-          });
-          saveCachedPeers();
-          renderPeersList();
-          renderMeshChainVisualizer();
-          closeOfflinePairModal();
-          showToastNotification('Bluetooth BLE', `🔗 Linked BLE Node: ${device.name || 'Nearby Device'}`);
-          openChatRoom(blePeerId, device.name || 'Bluetooth BLE Node', false);
-        }
-      } catch (err) {
-        console.log('BLE Scan cancelled or unsupported:', err);
-      }
+    function copyAnswerCode() {
+      const code = document.getElementById('answerCodeTextarea').value;
+      navigator.clipboard.writeText(code);
+      alert('Answer code copied! Paste into Node 1 to finish connection.');
     }
 
     // 15. Navigation Tabs
