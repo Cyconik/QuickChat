@@ -788,6 +788,7 @@
       initLocalBroadcast();
       initStorageEventListener();
       initGlobalMqttRelay();
+      initNativeBleMesh();
       startRealtimeDiscoveryLoop();
       renderGroupsList();
       renderPeersList();
@@ -796,6 +797,56 @@
       const lastTab = localStorage.getItem('qc_active_tab') || 'screen-nearby';
       switchTab(lastTab);
     });
+
+    // 5.1 Native Android BLE Mesh Radio Integration
+    let nativeBleMesh = null;
+    async function initNativeBleMesh() {
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativeBleMesh) {
+        nativeBleMesh = window.Capacitor.Plugins.NativeBleMesh;
+        console.log('⚡ Native Android BLE Mesh Plugin detected!');
+        
+        try {
+          if (currentUser) {
+            await nativeBleMesh.startMeshRadio({
+              userId: currentUser.id,
+              displayName: currentUser.displayName
+            });
+          }
+
+          nativeBleMesh.addListener('onPeerDiscovered', (peerData) => {
+            console.log('[Native BLE] Discovered Android BLE Node:', peerData);
+            const peerId = 'ble_' + (peerData.hardwareId ? peerData.hardwareId.replace(/:/g, '').toLowerCase() : Math.random().toString(36).substring(2, 8));
+            discoveredPeers.set(peerId, {
+              id: peerId,
+              username: 'ble_node',
+              displayName: peerData.name || 'Nearby BLE Phone',
+              publicKey: 'ble_key',
+              lastSeen: Date.now(),
+              isOnline: true,
+              isDirectLink: true,
+              hopsAway: 1
+            });
+            directMeshLinks.set(peerId, { id: peerId, displayName: peerData.name || 'Nearby BLE Phone', type: 'ble' });
+            saveCachedPeers();
+            renderPeersList();
+            renderMeshChainVisualizer();
+          });
+
+          nativeBleMesh.addListener('onPacketReceived', (event) => {
+            console.log('[Native BLE] Received Packet over BLE Radio:', event.rawPacket);
+            try {
+              const packet = JSON.parse(event.rawPacket);
+              handleIncomingPacket(packet);
+            } catch (_) {}
+          });
+
+          document.getElementById('headerStatusText').innerText = 'BLE MESH ACTIVE ⚡';
+          showToastNotification('Native BLE Radio', '📡 Real Android Bluetooth Mesh Radio Active!');
+        } catch (err) {
+          console.warn('Native BLE radio error:', err);
+        }
+      }
+    }
 
     function loadStoredIdentity() {
       const stored = localStorage.getItem('qc_user_identity');
@@ -829,6 +880,7 @@
       updateIdentityUI();
 
       broadcastPresence();
+      initNativeBleMesh();
       if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
       }
@@ -944,6 +996,13 @@
     // 9. CENTRAL PACKET TRANSMITTER OVER LIVE WEBRTC DATACHANNELS + ALL MESH LINKS
     function transmitPacket(packet) {
       const json = JSON.stringify(packet);
+
+      // 0. TRANSMIT OVER REAL NATIVE ANDROID BLUETOOTH BLE RADIO (ZERO-INTERNET / ZERO-HOTSPOT!)
+      if (nativeBleMesh) {
+        try {
+          nativeBleMesh.broadcastBlePacket({ packetJson: json });
+        } catch (_) {}
+      }
 
       // 1. TRANSMIT ACROSS ALL DIRECT OFFLINE WEBRTC DATACHANNELS (WORKS 100% OFFLINE!)
       for (const [peerId, entry] of activeWebRtcChannels.entries()) {
