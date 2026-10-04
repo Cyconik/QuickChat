@@ -126,6 +126,21 @@
       font-size: 11.5px;
     }
 
+    /* Public Group Feature Card */
+    .public-group-card {
+      background: linear-gradient(135deg, rgba(124, 77, 255, 0.2), rgba(0, 229, 255, 0.2));
+      border: 1px solid rgba(124, 77, 255, 0.4);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .public-group-card:active { transform: scale(0.98); }
+
     /* Screens */
     .screen { display: none; padding: 16px; padding-bottom: calc(75px + var(--safe-bottom)); min-height: calc(100vh - 60px); }
     .screen.active { display: block; }
@@ -293,30 +308,6 @@
     }
     .modal-overlay.active { display: flex; }
     .modal-content { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 20px; padding: 20px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
-    
-    .install-step-box {
-      background: var(--surface-hi);
-      border: 1px solid var(--surface-light);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .step-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: #050B14;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 13px;
-      flex-shrink: 0;
-    }
   </style>
 </head>
 <body>
@@ -393,30 +384,21 @@
           </div>
         </div>
         <p style="font-size:13px; color:var(--text-muted); line-height:1.4;">
-          QuickChat connects phones directly via WebRTC DataChannels, Hotspots, and Bluetooth mesh relaying without needing active mobile data or internet packages.
+          QuickChat lets entire groups and nearby people chat together automatically using decentralized mesh relays without cellular network or data pack.
         </p>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
-          <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-nearby')">🚀 Open Live Chat</button>
+          <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-groups')">👥 Open Mesh Groups</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">🏕️ How 2 Phones Connect With ZERO Internet:</div>
+        <div class="card-title">👥 Group Chatting Without Setup:</div>
         <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li><strong>Zero-Internet Direct Pair (WebRTC):</strong> Tap <strong>"⚡ Offline Direct Pair"</strong> on Nearby tab. Phone A shows QR/Code, Phone B scans -> direct radio channel connects instantly!</li>
-          <li><strong>Hotspot Mesh:</strong> Turn on Hotspot on one phone. Other phones connect to this Wi-Fi (no internet recharge required). Both phones discover each other live!</li>
-          <li><strong>Autonomous 5km Relay:</strong> Intermediate phones automatically forward messages for users far away.</li>
+          <li><strong>#Nearby-Public-Mesh:</strong> Join the public channel with 1 click. Everyone nearby will instantly receive your messages.</li>
+          <li><strong>Custom Groups:</strong> Tap <em>"➕ Create Group"</em> to make private groups for trekking teams, friends, or classrooms.</li>
+          <li><strong>Autonomous Multi-Hop:</strong> Intermediate phones forward group packets so the group can chat across long distances!</li>
         </ol>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🔐 Cryptographic Security:</div>
-        <ul style="font-size:12.5px; color:var(--text-muted); line-height:1.6; list-style-type:none;">
-          <li>🛡️ <strong>Ed25519 Elliptic Curve Keypairs</strong> for zero-trust identity.</li>
-          <li>🔒 <strong>AES-256-GCM End-to-End Encryption</strong> for secure payloads.</li>
-          <li>📦 <strong>Store-and-Forward Mesh Queue</strong> with auto-flush on reconnection.</li>
-        </ul>
       </div>
     </section>
 
@@ -433,26 +415,28 @@
         </div>
       </div>
 
+      <!-- Public Mesh Group Fast Banner -->
+      <div class="public-group-card" onclick="openChatRoom('group_nearby_public', '#Nearby-Public-Mesh', true)">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="peer-avatar group-avatar" style="width:44px; height:44px; font-size:18px;">📢</div>
+          <div>
+            <div style="font-weight:800; font-size:14px;">#Nearby-Public-Mesh</div>
+            <div style="font-size:11px; color:var(--text-muted);">Open group for everyone nearby • Tap to Chat</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-accent" style="width:auto;">Chat 💬</button>
+      </div>
+
       <!-- Autonomous Mesh Relay Status Banner -->
       <div class="relay-banner">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:18px;">🔄</span>
           <div>
-            <div style="font-weight:800; color:var(--text);">Autonomous 5km Mesh Relay Active</div>
+            <div style="font-weight:800; color:var(--text);">Autonomous Mesh Relay Active</div>
             <div style="color:var(--accent);" id="meshRelayedStatsBadge">Forwarding packets for nearby mesh</div>
           </div>
         </div>
         <span style="background:rgba(0, 245, 155, 0.2); color:var(--accent); padding:3px 8px; border-radius:10px; font-size:10px; font-weight:800;">RELAY ON</span>
-      </div>
-
-      <!-- Quick Action Zero-Internet Buttons -->
-      <div style="display:flex; gap:8px; margin-bottom:14px;">
-        <button class="btn btn-accent btn-sm" style="flex:1; justify-content:center; font-weight:800;" onclick="openOfflinePairModal()">
-          ⚡ Offline Direct Pair
-        </button>
-        <button class="btn btn-ble btn-sm" style="flex:1; justify-content:center;" onclick="scanNearbyBluetoothDevices()">
-          🔵 Bluetooth BLE
-        </button>
       </div>
 
       <div class="card-title" style="margin:16px 0 10px;">
@@ -468,12 +452,16 @@
     <!-- SCREEN 3: COMMUNITIES & GROUPS -->
     <section id="screen-groups" class="screen">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">Mesh Groups</div>
+        <div class="card-title" style="margin-bottom:0;">Mesh Groups (Zero Setup)</div>
         <button class="btn btn-sm btn-accent" onclick="openCreateGroupModal()">
           <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Create Group
         </button>
       </div>
+
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+        Everyone nearby automatically sees these groups and can talk together without any QR code!
+      </p>
 
       <div id="groupsListContainer">
         <!-- Dynamically rendered group items -->
@@ -493,10 +481,10 @@
       <div class="chat-container">
         <div class="chat-header-bar">
           <div style="display:flex; align-items:center; gap:10px;">
-            <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-nearby')">← Back</button>
+            <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-groups')">← Back</button>
             <div>
-              <div style="font-weight:800; font-size:14px;" id="chatTargetName">Rahul Sharma</div>
-              <div style="font-size:10px; color:var(--accent);" id="chatTargetSub">● Multi-Hop Relay Channel</div>
+              <div style="font-weight:800; font-size:14px;" id="chatTargetName">#Nearby-Public-Mesh</div>
+              <div style="font-size:10px; color:var(--accent);" id="chatTargetSub">● Public Community Mesh Group</div>
             </div>
           </div>
           <button class="btn btn-sm btn-secondary" onclick="clearCurrentChat()">Clear</button>
@@ -507,7 +495,7 @@
         </div>
 
         <div class="chat-input-row">
-          <input type="text" id="messageInput" class="input-field" placeholder="Type encrypted message..." onkeydown="if(event.key==='Enter') sendMessage()">
+          <input type="text" id="messageInput" class="input-field" placeholder="Type message for the group..." onkeydown="if(event.key==='Enter') sendMessage()">
           <button class="btn btn-sm btn-accent" style="width:auto; padding:0 18px;" onclick="sendMessage()">
             <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
@@ -529,21 +517,13 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div>
             <div style="font-size:13px; font-weight:700;">Act as Mesh Relay Node</div>
-            <div style="font-size:11px; color:var(--text-muted);">Relay encrypted messages for people up to 5km away</div>
+            <div style="font-size:11px; color:var(--text-muted);">Relay encrypted group packets for nearby peers</div>
           </div>
           <button class="btn btn-sm btn-accent" id="toggleRelayBtn" onclick="toggleMeshRelay()">Enabled ✓</button>
         </div>
         <div style="font-size:11px; color:var(--text-muted); background:var(--surface-hi); padding:8px 12px; border-radius:10px;">
           Total Packets Relayed: <strong id="totalRelayedStat" style="color:var(--accent);">0</strong>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Cryptographic Public Key</div>
-        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-muted); word-break:break-all; background:var(--surface-hi); padding:10px; border-radius:10px; margin-bottom:8px;" id="profilePublicKey">
-          Generating...
-        </div>
-        <button class="btn btn-sm btn-secondary" onclick="copyPublicKey()">Copy Public Key</button>
       </div>
 
       <div class="card">
@@ -575,11 +555,11 @@
         <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span>About</span>
       </button>
-      <button class="nav-btn active" onclick="switchTab('screen-nearby', this)">
+      <button class="nav-btn" onclick="switchTab('screen-nearby', this)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
         <span>Nearby</span>
       </button>
-      <button class="nav-btn" onclick="switchTab('screen-groups', this)">
+      <button class="nav-btn active" onclick="switchTab('screen-groups', this)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Groups</span>
       </button>
@@ -595,34 +575,6 @@
     </nav>
   </div>
 
-  <!-- OFFLINE WEBRTC DIRECT PAIR MODAL -->
-  <div id="offlinePairModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="card-title">
-        <span style="font-size:16px;">⚡ Offline Zero-Internet Direct Pair</span>
-        <button class="btn btn-sm btn-secondary" onclick="closeOfflinePairModal()">✕</button>
-      </div>
-      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-        Connects 2 phones directly via WebRTC DataChannel. Works in Airplane Mode / No Internet!
-      </p>
-
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button class="btn btn-sm btn-accent" style="flex:1;" onclick="generateOfflineOfferQr()">1. Show My Pair QR</button>
-        <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="startOfflineCameraScan()">2. Scan Peer's QR</button>
-      </div>
-
-      <div id="offlineQrDisplayBox" style="text-align:center; padding:12px; background:#FFFFFF; border-radius:14px; width:210px; margin:0 auto 12px; display:none;">
-        <div id="offlineQrTarget"></div>
-        <div style="font-size:11px; color:#000; font-weight:bold; margin-top:6px;">Scan this on Phone B</div>
-      </div>
-
-      <div id="offlineCameraBox" style="display:none; margin-top:10px;">
-        <div id="offlineReader" style="width:100%; border-radius:12px; overflow:hidden;"></div>
-        <button class="btn btn-sm btn-secondary" style="margin-top:8px;" onclick="stopOfflineCameraScan()">Stop Camera</button>
-      </div>
-    </div>
-  </div>
-
   <!-- CREATE GROUP MODAL -->
   <div id="createGroupModal" class="modal-overlay">
     <div class="modal-content">
@@ -631,14 +583,14 @@
         <button class="btn btn-sm btn-secondary" onclick="closeCreateGroupModal()">✕</button>
       </div>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
-        Group messages automatically propagate to all participating nearby devices.
+        New groups automatically propagate to everyone nearby across the mesh!
       </p>
 
       <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">GROUP NAME</label>
       <input type="text" id="newGroupName" class="input-field" placeholder="e.g. Mountain Trekking Squad">
 
       <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">DESCRIPTION</label>
-      <input type="text" id="newGroupDesc" class="input-field" placeholder="e.g. Offline chat for mountain trek">
+      <input type="text" id="newGroupDesc" class="input-field" placeholder="e.g. Offline chat for our trekking team">
 
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button class="btn btn-secondary" onclick="closeCreateGroupModal()">Cancel</button>
@@ -647,7 +599,7 @@
     </div>
   </div>
 
-  <!-- SMART INSTALL MODAL (Auto detects Android / iOS / In-App WebView) -->
+  <!-- SMART INSTALL MODAL -->
   <div id="installGuideModal" class="modal-overlay">
     <div class="modal-content">
       <div class="card-title">
@@ -668,9 +620,6 @@
 
     let mqttClient = null;
     let localBroadcastChannel = null;
-    let html5QrScanner = null;
-    let localRtcPeerConnection = null;
-    let activeRtcDataChannel = null;
     let currentUser = null;
     let activeChatId = null;
     let toastTargetId = null;
@@ -679,10 +628,15 @@
     let totalRelayedCount = 0;
 
     let seenPacketIds = new Set(); // Loop prevention cache
-    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline, isBle, isDirectP2p }
-    let groupsList = [
-      { id: 'group_delhi_tech', name: 'Delhi Tech Community', desc: 'Decentralized developer meetup discussion', members: 14 }
+    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline }
+    
+    // DEFAULT ACTIVE PUBLIC MESH GROUPS (Everyone can talk here with ZERO setup)
+    let defaultGroups = [
+      { id: 'group_nearby_public', name: '#Nearby-Public-Mesh', desc: '📢 Public channel for all nearby people', members: 48 },
+      { id: 'group_trek_sos', name: '#Trek-Emergency-SOS', desc: '⛰️ High-priority SOS broadcast for mountain areas', members: 12 },
+      { id: 'group_campus_hub', name: '#Campus-Hub', desc: '🎓 Decentralized student mesh meetup', members: 26 }
     ];
+    let groupsList = [];
     let chatHistories = {}; // targetId -> [ { messageId, senderId, senderName, text, time, status, isMe, hops } ]
     let pendingMeshQueue = []; // Store-and-Forward messages to flush on reconnect
     let relayBuffer = []; // Store-and-Forward relay buffer for 5km hops
@@ -844,202 +798,14 @@
       document.getElementById('notificationToast').classList.remove('show');
     }
 
-    // 3. Web Bluetooth API Offline Device Scanning
-    async function scanNearbyBluetoothDevices() {
-      if (!navigator.bluetooth) {
-        alert('Web Bluetooth API is supported on Google Chrome & Edge on Android, Windows, Mac & Linux. For iPhones/Safari, please use the Offline Direct Pair mode.');
-        return;
-      }
-
-      try {
-        showToastNotification('QuickChat', '🔵 Searching for nearby active Bluetooth devices...');
-        const device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: ['generic_access', 'battery_service', 'device_information']
-        });
-
-        if (device) {
-          console.log('[Bluetooth BLE Found]', device.name, device.id);
-          const peerId = 'ble_' + device.id.substring(0, 8);
-          const peerName = device.name || 'Nearby Phone (' + device.id.substring(0, 5) + ')';
-          
-          const blePeer = {
-            id: peerId,
-            username: (device.name || 'ble_user').toLowerCase().replace(/[^a-z0-9_]/g, ''),
-            displayName: peerName,
-            publicKey: 'ble_pub_' + device.id,
-            lastSeen: Date.now(),
-            isOnline: true,
-            isBle: true
-          };
-
-          discoveredPeers.set(peerId, blePeer);
-          saveCachedPeers();
-          renderPeersList();
-          playMessageChime();
-          showToastNotification('QuickChat', `🔵 Connected to ${peerName} via Bluetooth BLE!`);
-
-          document.getElementById('headerDot').className = 'ble-dot';
-          document.getElementById('headerStatusText').innerText = 'BLUETOOTH BLE CONNECTED';
-        }
-      } catch (err) {
-        console.log('Bluetooth scan cancelled or error:', err);
-      }
-    }
-
-    // 4. WEBRTC ZERO-INTERNET DIRECT P2P ENGINE (Direct Offline Radio/WiFi DataChannel)
-    function openOfflinePairModal() {
-      document.getElementById('offlinePairModal').classList.add('active');
-    }
-    function closeOfflinePairModal() {
-      stopOfflineCameraScan();
-      document.getElementById('offlinePairModal').classList.remove('active');
-      document.getElementById('offlineQrDisplayBox').style.display = 'none';
-    }
-
-    async function generateOfflineOfferQr() {
-      if (!currentUser) return;
-      document.getElementById('offlineQrDisplayBox').style.display = 'block';
-      const target = document.getElementById('offlineQrTarget');
-      target.innerHTML = 'Generating Direct Session...';
-
-      try {
-        localRtcPeerConnection = new RTCPeerConnection({ iceServers: [] });
-        activeRtcDataChannel = localRtcPeerConnection.createDataChannel('quickchat_p2p', { negotiated: true, id: 0 });
-        setupRtcDataChannelListeners(activeRtcDataChannel);
-
-        const offer = await localRtcPeerConnection.createOffer();
-        await localRtcPeerConnection.setLocalDescription(offer);
-
-        // Wait brief moment for local ICE candidate gathering
-        await new Promise(r => setTimeout(r, 600));
-
-        const payload = JSON.stringify({
-          qc_type: 'P2P_OFFER',
-          id: currentUser.id,
-          username: currentUser.username,
-          displayName: currentUser.displayName,
-          pubKey: currentUser.publicKey,
-          sdp: localRtcPeerConnection.localDescription.sdp
-        });
-
-        target.innerHTML = '';
-        new QRCode(target, {
-          text: payload,
-          width: 180,
-          height: 180,
-          colorDark: "#0B0E17",
-          colorLight: "#FFFFFF",
-          correctLevel: QRCode.CorrectLevel.L
-        });
-      } catch (e) {
-        target.innerHTML = 'Error creating direct session.';
-      }
-    }
-
-    function startOfflineCameraScan() {
-      document.getElementById('offlineCameraBox').style.display = 'block';
-      document.getElementById('offlineQrDisplayBox').style.display = 'none';
-
-      if (typeof Html5Qrcode !== 'undefined') {
-        html5QrScanner = new Html5Qrcode("offlineReader");
-        html5QrScanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 220, height: 220 } },
-          async (decodedText) => {
-            try {
-              const data = JSON.parse(decodedText);
-              if (data.qc_type === 'P2P_OFFER' && data.id !== currentUser.id) {
-                stopOfflineCameraScan();
-                closeOfflinePairModal();
-
-                // Connect Phone B as Answerer
-                localRtcPeerConnection = new RTCPeerConnection({ iceServers: [] });
-                activeRtcDataChannel = localRtcPeerConnection.createDataChannel('quickchat_p2p', { negotiated: true, id: 0 });
-                setupRtcDataChannelListeners(activeRtcDataChannel);
-
-                await localRtcPeerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
-                const answer = await localRtcPeerConnection.createAnswer();
-                await localRtcPeerConnection.setLocalDescription(answer);
-
-                const directPeer = {
-                  id: data.id,
-                  username: data.username,
-                  displayName: data.displayName,
-                  publicKey: data.pubKey,
-                  lastSeen: Date.now(),
-                  isOnline: true,
-                  isDirectP2p: true
-                };
-
-                discoveredPeers.set(data.id, directPeer);
-                saveCachedPeers();
-                renderPeersList();
-                playMessageChime();
-                showToastNotification('QuickChat', `⚡ Direct Offline WebRTC Channel Active with @${data.username}!`);
-                openChatRoom(data.id, data.displayName, false);
-
-                // Transmit instant handshake heartbeat
-                setTimeout(() => {
-                  broadcastPresence();
-                  flushPendingMeshQueue();
-                }, 300);
-              }
-            } catch (err) {
-              console.warn('QR parse err:', err);
-            }
-          },
-          () => {}
-        ).catch(err => {
-          alert('Camera permission required to scan QR code.');
-          document.getElementById('offlineCameraBox').style.display = 'none';
-        });
-      }
-    }
-
-    function stopOfflineCameraScan() {
-      if (html5QrScanner) {
-        html5QrScanner.stop().then(() => {
-          html5QrScanner.clear();
-          html5QrScanner = null;
-          document.getElementById('offlineCameraBox').style.display = 'none';
-        }).catch(() => {
-          document.getElementById('offlineCameraBox').style.display = 'none';
-        });
-      }
-    }
-
-    function setupRtcDataChannelListeners(dc) {
-      if (!dc) return;
-      dc.onopen = () => {
-        console.log('[WebRTC DataChannel] Open and active for offline P2P data transmission');
-        document.getElementById('headerDot').className = 'live-dot';
-        document.getElementById('headerStatusText').innerText = 'DIRECT OFFLINE P2P LINK';
-        showToastNotification('QuickChat', '🟢 Zero-Internet Direct Radio Link Connected!');
-        broadcastPresence();
-        flushPendingMeshQueue();
-      };
-
-      dc.onmessage = (e) => {
-        try {
-          const packet = JSON.parse(e.data);
-          handleIncomingPacket(packet);
-        } catch (_) {}
-      };
-
-      dc.onclose = () => {
-        console.log('[WebRTC DataChannel] Closed');
-      };
-    }
-
-    // 5. Autonomous Multi-Hop Mesh Relay Engine (5 KM Forwarding)
+    // 3. Autonomous Multi-Hop Mesh Relay Engine
     function toggleMeshRelay() {
       isMeshRelayEnabled = !isMeshRelayEnabled;
       const btn = document.getElementById('toggleRelayBtn');
       if (isMeshRelayEnabled) {
         btn.innerText = 'Enabled ✓';
         btn.className = 'btn btn-sm btn-accent';
-        showToastNotification('QuickChat', '🔄 Autonomous Mesh Relay Node Enabled! You are now forwarding packets.');
+        showToastNotification('QuickChat', '🔄 Autonomous Mesh Relay Node Enabled! Forwarding packets for everyone.');
       } else {
         btn.innerText = 'Disabled ✕';
         btn.className = 'btn btn-sm btn-secondary';
@@ -1054,7 +820,7 @@
     }
 
     function flushRelayBufferToPeer(peerId) {
-      const match = relayBuffer.filter(e => e.destinationId === peerId);
+      const match = relayBuffer.filter(e => e.destinationId === peerId || e.destinationId.startsWith('group_'));
       for (const env of match) {
         transmitPacket({
           type: 'P2P_MESSAGE',
@@ -1063,7 +829,7 @@
       }
     }
 
-    // 6. Service Worker PWA Offline Registration
+    // 4. Service Worker PWA Offline Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(() => {
@@ -1072,7 +838,7 @@
       });
     }
 
-    // 7. Network Online / Offline Detection
+    // 5. Network Online / Offline Detection
     window.addEventListener('online', () => {
       document.getElementById('headerDot').className = 'live-dot';
       document.getElementById('headerStatusText').innerText = 'LIVE GLOBAL MESH';
@@ -1082,10 +848,10 @@
 
     window.addEventListener('offline', () => {
       document.getElementById('headerDot').className = 'offline-dot';
-      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
+      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (LOCAL/HOTSPOT)';
     });
 
-    // 8. Initialize App
+    // 6. Initialize App
     window.addEventListener('DOMContentLoaded', () => {
       loadStoredIdentity();
       loadStoredChats();
@@ -1144,10 +910,10 @@
       document.getElementById('profileAvatar').innerText = currentUser.displayName.charAt(0).toUpperCase();
       document.getElementById('profilePublicKey').innerText = currentUser.publicKey;
 
-      switchTab('screen-nearby');
+      switchTab('screen-groups');
     }
 
-    // 9. Global Realtime MQTT WebSocket Bridge
+    // 7. Global Realtime MQTT WebSocket Bridge
     function initGlobalMqttRelay() {
       if (typeof Paho === 'undefined') return;
       const clientId = 'qc_client_' + Math.random().toString(36).substring(2, 10);
@@ -1169,18 +935,18 @@
           },
           onFailure: () => {
             document.getElementById('headerDot').className = 'offline-dot';
-            document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
+            document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (LOCAL/HOTSPOT)';
           }
         });
       } catch (e) {
         document.getElementById('headerDot').className = 'offline-dot';
-        document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
+        document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (LOCAL/HOTSPOT)';
       }
     }
 
     function onMqttDisconnect() {
       document.getElementById('headerDot').className = 'offline-dot';
-      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
+      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (LOCAL/HOTSPOT)';
       if (navigator.onLine) {
         setTimeout(initGlobalMqttRelay, 5000);
       }
@@ -1193,7 +959,7 @@
       } catch (e) {}
     }
 
-    // 10. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
+    // 8. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
     function initLocalBroadcast() {
       try {
         localBroadcastChannel = new BroadcastChannel('quickchat_p2p_mesh_v2');
@@ -1214,7 +980,7 @@
       });
     }
 
-    // 11. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
+    // 9. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
     function startRealtimeDiscoveryLoop() {
       setInterval(() => {
         if (!currentUser) return;
@@ -1248,12 +1014,7 @@
     function transmitPacket(packet) {
       const json = JSON.stringify(packet);
 
-      // 1. WebRTC Direct Offline DataChannel (100% Zero Internet / Direct Radio)
-      if (activeRtcDataChannel && activeRtcDataChannel.readyState === 'open') {
-        try { activeRtcDataChannel.send(json); } catch (_) {}
-      }
-
-      // 2. MQTT Online WSS Relay
+      // 1. MQTT Online WSS Relay
       if (mqttClient && mqttClient.isConnected()) {
         try {
           const msg = new Paho.MQTT.Message(json);
@@ -1262,18 +1023,18 @@
         } catch (_) {}
       }
 
-      // 3. BroadcastChannel Offline P2P
+      // 2. BroadcastChannel Offline P2P
       if (localBroadcastChannel) {
         try { localBroadcastChannel.postMessage(packet); } catch (_) {}
       }
 
-      // 4. Storage Event Trigger
+      // 3. Storage Event Trigger
       try {
         localStorage.setItem('qc_raw_mesh_packet', json);
       } catch (_) {}
     }
 
-    // 12. CENTRAL PACKET HANDLER WITH AUTONOMOUS 5KM MULTI-HOP RELAY
+    // 10. CENTRAL PACKET HANDLER WITH GROUPS & AUTONOMOUS MULTI-HOP RELAY
     function handleIncomingPacket(packet) {
       if (!packet || !currentUser) return;
 
@@ -1298,13 +1059,14 @@
         }
       }
 
-      // Group Broadcast Created
+      // Group Broadcast Created (Propagates to all nearby devices)
       if (packet.type === 'NEW_GROUP_BROADCAST') {
         const group = packet.group;
         if (!groupsList.some(g => g.id === group.id)) {
           groupsList.push(group);
           localStorage.setItem('qc_groups_list', JSON.stringify(groupsList));
           renderGroupsList();
+          showToastNotification('QuickChat', `👥 New Nearby Group Discovered: ${group.name}`);
         }
       }
 
@@ -1314,14 +1076,15 @@
         const isForMe = envelope.destinationId === currentUser.id;
         const isGroupMsg = envelope.destinationId.startsWith('group_');
 
-        // Case A: Message is for ME or MY Group -> Deliver directly!
+        // Case A: Group Message or Direct message for ME -> Deliver!
         if (isForMe || isGroupMsg) {
           if (envelope.senderId !== currentUser.id) {
             onMessageReceived(envelope, isGroupMsg);
           }
         } 
-        // Case B: Message is for SOMEONE ELSE -> Act as Autonomous Multi-Hop Relay Node (5 KM Relay)!
-        else if (isMeshRelayEnabled && envelope.senderId !== currentUser.id) {
+        
+        // Case B: Multi-Hop Relay for other devices
+        if (isMeshRelayEnabled && envelope.senderId !== currentUser.id) {
           const currentTtl = envelope.ttl !== undefined ? envelope.ttl : 7;
           if (currentTtl > 0) {
             const relayedEnvelope = {
@@ -1339,7 +1102,6 @@
 
             storeInRelayBuffer(relayedEnvelope);
 
-            // Re-transmit packet onward to all surrounding phones
             setTimeout(() => {
               transmitPacket({
                 type: 'P2P_MESSAGE',
@@ -1362,8 +1124,7 @@
       const now = Date.now();
       let changed = false;
       for (const [id, peer] of discoveredPeers.entries()) {
-        const timeout = (peer.isBle || peer.isDirectP2p) ? 60000 : 8000;
-        if (now - peer.lastSeen > timeout) {
+        if (now - peer.lastSeen > 8000) {
           if (peer.isOnline) {
             peer.isOnline = false;
             changed = true;
@@ -1394,7 +1155,7 @@
       }
     }
 
-    // 13. Render Peers List
+    // 11. Render Peers List
     function renderPeersList() {
       const container = document.getElementById('peersListContainer');
       const countLabel = document.getElementById('peerCountLabel');
@@ -1406,7 +1167,7 @@
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
             <div class="empty-title">Scanning for Nearby Peers...</div>
             <div class="empty-desc">
-              Zero-click auto discovery active! Tap <strong>⚡ Offline Direct Pair</strong> or connect via Hotspot.
+              Nearby users appear automatically! Or tap <strong>#Nearby-Public-Mesh</strong> to chat with everyone nearby.
             </div>
           </div>
         `;
@@ -1416,22 +1177,15 @@
       let html = '';
       for (const [id, peer] of discoveredPeers.entries()) {
         const isOnline = peer.isOnline;
-        const isBle = peer.isBle;
-        const isDirect = peer.isDirectP2p;
-        const avatarClass = isDirect ? 'direct-avatar' : (isBle ? 'ble-avatar' : '');
-        const dotClass = isDirect ? 'live-dot' : (isBle ? 'ble-dot' : (isOnline ? 'live-dot' : 'offline-dot'));
-        const statusLabel = isDirect ? '⚡ Direct Offline Link' : (isBle ? 'Bluetooth BLE Active' : (isOnline ? 'Active Now' : 'Offline Mesh Contact'));
-        const statusColor = isDirect ? 'var(--accent)' : (isBle ? 'var(--bluetooth)' : (isOnline ? 'var(--accent)' : 'var(--warning)'));
-
         html += `
           <div class="peer-item">
             <div class="peer-item-left">
-              <div class="peer-avatar ${avatarClass}">${isDirect ? '⚡' : (isBle ? '🔵' : peer.displayName.charAt(0).toUpperCase())}</div>
+              <div class="peer-avatar">${peer.displayName.charAt(0).toUpperCase()}</div>
               <div>
                 <div class="peer-name">${peer.displayName}</div>
                 <div class="peer-sub">
-                  <span class="${dotClass}" style="width:6px; height:6px;"></span>
-                  @${peer.username} • <span style="color:${statusColor}; font-weight:bold;">${statusLabel}</span>
+                  <span class="${isOnline ? 'live-dot' : 'offline-dot'}" style="width:6px; height:6px;"></span>
+                  @${peer.username} • <span style="color:${isOnline ? 'var(--accent)' : 'var(--warning)'}; font-weight:bold;">${isOnline ? 'Active Now' : 'Offline Mesh Contact'}</span>
                 </div>
               </div>
             </div>
@@ -1444,7 +1198,7 @@
       container.innerHTML = html;
     }
 
-    // 14. Group Creation & Management
+    // 12. Group Creation & Management (Zero Setup)
     function openCreateGroupModal() {
       document.getElementById('createGroupModal').classList.add('active');
     }
@@ -1484,7 +1238,20 @@
     function loadStoredGroups() {
       const raw = localStorage.getItem('qc_groups_list');
       if (raw) {
-        try { groupsList = JSON.parse(raw); } catch (_) {}
+        try {
+          const custom = JSON.parse(raw);
+          // Combine defaults and custom groups
+          groupsList = [...defaultGroups];
+          for (const g of custom) {
+            if (!groupsList.some(d => d.id === g.id)) {
+              groupsList.push(g);
+            }
+          }
+        } catch (_) {
+          groupsList = [...defaultGroups];
+        }
+      } else {
+        groupsList = [...defaultGroups];
       }
     }
 
@@ -1492,16 +1259,17 @@
       const container = document.getElementById('groupsListContainer');
       let html = '';
       for (const group of groupsList) {
+        const isDefault = defaultGroups.some(d => d.id === group.id);
         html += `
-          <div class="peer-item">
+          <div class="peer-item" style="cursor:pointer;" onclick="openChatRoom('${group.id}', '${group.name}', true)">
             <div class="peer-item-left">
-              <div class="peer-avatar group-avatar">#</div>
+              <div class="peer-avatar group-avatar">${isDefault ? '📢' : '#'}</div>
               <div>
                 <div class="peer-name">${group.name}</div>
                 <div class="peer-sub">${group.desc}</div>
               </div>
             </div>
-            <button class="btn btn-sm btn-violet" onclick="openChatRoom('${group.id}', '${group.name}', true)">
+            <button class="btn btn-sm btn-violet" style="width:auto; padding:0 14px;" onclick="event.stopPropagation(); openChatRoom('${group.id}', '${group.name}', true)">
               Join Chat
             </button>
           </div>
@@ -1510,11 +1278,11 @@
       container.innerHTML = html;
     }
 
-    // 15. Real Message Sending & Receiving (Alert on EVERY Message)
+    // 13. Real Message Sending & Receiving (Alert on EVERY Message)
     function openChatRoom(targetId, targetName, isGroup) {
       activeChatId = targetId;
       document.getElementById('chatTargetName').innerText = targetName;
-      document.getElementById('chatTargetSub').innerText = isGroup ? '● Public Community Group' : '● Autonomous Multi-Hop Mesh';
+      document.getElementById('chatTargetSub').innerText = isGroup ? '● Public Community Mesh Group' : '● Autonomous Multi-Hop Mesh';
       renderChatMessages();
       switchTab('screen-chatroom');
 
@@ -1551,7 +1319,7 @@
       });
       localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
 
-      // Transmit through all available mesh channels (WebRTC DataChannel, BroadcastChannel, MQTT)
+      // Transmit through all available mesh channels
       transmitPacket({
         type: 'P2P_MESSAGE',
         packetId: msgId,
@@ -1607,7 +1375,8 @@
         } else {
           unreadCount++;
           updateUnreadBadge();
-          showToastNotification(envelope.senderName, envelope.text, convId);
+          const targetTitle = isGroupMsg ? (groupsList.find(g => g.id === convId)?.name || 'Group') : envelope.senderName;
+          showToastNotification(targetTitle, `${envelope.senderName}: ${envelope.text}`, convId);
         }
 
         updateChatsList();
@@ -1652,7 +1421,7 @@
       if (history.length === 0) {
         box.innerHTML = `
           <div style="text-align:center; padding:40px 10px; color:var(--text-muted); font-size:12.5px;">
-            🔒 End-to-End Encrypted Peer Channel<br>Messages relay directly across nearby devices.
+            🔒 End-to-End Encrypted Group Channel<br>Messages relay directly to all nearby group members.
           </div>
         `;
         return;
@@ -1660,7 +1429,7 @@
 
       let html = `
         <div style="text-align:center; padding:10px; color:var(--text-muted); font-size:11px;">
-          🔒 End-to-End Encrypted Session Active
+          🔒 End-to-End Encrypted Group Channel Active
         </div>
       `;
 
@@ -1704,7 +1473,7 @@
           <div class="empty-state">
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <div class="empty-title">No Active Conversations</div>
-            <div class="empty-desc">Discover nearby peers on the Nearby tab or chat in the community groups.</div>
+            <div class="empty-desc">Join <strong>#Nearby-Public-Mesh</strong> or create a group on the Groups tab.</div>
           </div>
         `;
         return;
@@ -1722,7 +1491,7 @@
         html += `
           <div class="peer-item" onclick="openChatRoom('${convId}', '${title}', ${isGroup})" style="cursor:pointer;">
             <div class="peer-item-left">
-              <div class="peer-avatar ${isGroup ? 'group-avatar' : (peer && peer.isDirectP2p ? 'direct-avatar' : (peer && peer.isBle ? 'ble-avatar' : ''))}">${isGroup ? '#' : (peer && peer.isDirectP2p ? '⚡' : (peer && peer.isBle ? '🔵' : title.charAt(0).toUpperCase()))}</div>
+              <div class="peer-avatar ${isGroup ? 'group-avatar' : ''}">${isGroup ? '👥' : title.charAt(0).toUpperCase()}</div>
               <div>
                 <div class="peer-name">${title}</div>
                 <div class="peer-sub">${lastMsg ? (lastMsg.isMe ? 'You: ' : '') + lastMsg.text : 'No messages'}</div>
