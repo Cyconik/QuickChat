@@ -21,6 +21,7 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
@@ -31,17 +32,16 @@ import android.util.Log;
 import androidx.core.app.ActivityCompat;
 
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
-
-import org.json.JSONObject;
+import com.getcapacitor.annotation.PermissionCallback;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,7 +56,8 @@ import java.util.concurrent.ConcurrentHashMap;
                 Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_ADVERTISE,
                 Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             }
         )
     }
@@ -81,7 +82,6 @@ public class NativeBleMeshPlugin extends Plugin {
     private final Map<String, BluetoothDevice> discoveredDevices = new ConcurrentHashMap<>();
     private final Map<String, BluetoothGatt> connectedGattClients = new ConcurrentHashMap<>();
     private final Map<String, BluetoothDevice> connectedGattServers = new ConcurrentHashMap<>();
-    private final Map<String, StringBuilder> incomingPayloadBuffers = new ConcurrentHashMap<>();
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -96,13 +96,44 @@ public class NativeBleMeshPlugin extends Plugin {
 
     @PluginMethod
     public void startMeshRadio(PluginCall call) {
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            call.reject("Bluetooth is turned OFF. Please enable Bluetooth.");
+        selfUserId = call.getString("userId", selfUserId);
+        selfDisplayName = call.getString("displayName", selfDisplayName);
+
+        if (getPermissionState("bluetooth") != PermissionState.GRANTED) {
+            requestPermissionForAlias("bluetooth", call, "bluetoothPermsCallback");
             return;
         }
 
-        selfUserId = call.getString("userId", selfUserId);
-        selfDisplayName = call.getString("displayName", selfDisplayName);
+        enableBluetoothAndStart(call);
+    }
+
+    @PermissionCallback
+    private void bluetoothPermsCallback(PluginCall call) {
+        if (getPermissionState("bluetooth") == PermissionState.GRANTED) {
+            enableBluetoothAndStart(call);
+        } else {
+            call.reject("Bluetooth & Nearby permissions are required for offline mesh messaging.");
+        }
+    }
+
+    private void enableBluetoothAndStart(PluginCall call) {
+        BluetoothManager bluetoothManager = (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
+        if (bluetoothManager != null) {
+            bluetoothAdapter = bluetoothManager.getAdapter();
+        }
+
+        if (bluetoothAdapter == null) {
+            call.reject("Device does not support Bluetooth LE.");
+            return;
+        }
+
+        if (!bluetoothAdapter.isEnabled()) {
+            try {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                enableBtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(enableBtIntent);
+            } catch (Exception ignored) {}
+        }
 
         startGattServer();
         startAdvertising();
@@ -136,7 +167,7 @@ public class NativeBleMeshPlugin extends Plugin {
         int sentCount = 0;
         byte[] payloadBytes = jsonPayload.getBytes(StandardCharsets.UTF_8);
 
-        // Write to all active connected GATT clients
+        // Write directly to all connected GATT clients
         for (Map.Entry<String, BluetoothGatt> entry : connectedGattClients.entrySet()) {
             BluetoothGatt gatt = entry.getValue();
             try {
@@ -225,7 +256,7 @@ public class NativeBleMeshPlugin extends Plugin {
         service.addCharacteristic(rxChar);
         service.addCharacteristic(txChar);
         gattServer.addService(service);
-        Log.i(TAG, "GATT Server started with Service UUID: " + SERVICE_UUID);
+        Log.i(TAG, "GATT Server running with Service: " + SERVICE_UUID);
     }
 
     private void stopGattServer() {
@@ -260,7 +291,7 @@ public class NativeBleMeshPlugin extends Plugin {
 
         advertiser.startAdvertising(settings, data, advertiseCallback);
         isAdvertising = true;
-        Log.i(TAG, "BLE Advertising started for Service: " + SERVICE_UUID);
+        Log.i(TAG, "BLE Advertising started");
     }
 
     private void stopAdvertising() {
@@ -304,7 +335,7 @@ public class NativeBleMeshPlugin extends Plugin {
 
         scanner.startScan(filters, settings, scanCallback);
         isScanning = true;
-        Log.i(TAG, "BLE Scanning active for QuickChat nodes");
+        Log.i(TAG, "BLE Scanning active");
     }
 
     private void stopScanning() {
@@ -326,12 +357,12 @@ public class NativeBleMeshPlugin extends Plugin {
             String addr = device.getAddress();
             if (!discoveredDevices.containsKey(addr)) {
                 discoveredDevices.put(addr, device);
-                Log.i(TAG, "Discovered QuickChat Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
+                Log.i(TAG, "Discovered Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
 
                 mainHandler.post(() -> {
                     JSObject peerData = new JSObject();
                     peerData.put("hardwareId", addr);
-                    peerData.put("name", "BLE Node " + addr.substring(Math.max(0, addr.length() - 5)));
+                    peerData.put("name", "BLE Phone (" + addr.substring(Math.max(0, addr.length() - 5)) + ")");
                     peerData.put("rssi", result.getRssi());
                     notifyListeners("onPeerDiscovered", peerData);
                 });
@@ -354,7 +385,7 @@ public class NativeBleMeshPlugin extends Plugin {
                 super.onConnectionStateChange(gatt, status, newState);
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     connectedGattClients.put(device.getAddress(), gatt);
-                    Log.i(TAG, "Connected to Peer GATT Server: " + device.getAddress());
+                    Log.i(TAG, "Connected to Peer GATT: " + device.getAddress());
                     if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
                         gatt.discoverServices();
                     }
