@@ -197,6 +197,42 @@
       margin-bottom: 10px;
       border: 1px solid var(--surface-light);
       animation: fadeIn 0.3s ease-in;
+      transition: all 0.2s ease;
+    }
+    .peer-item.has-unread {
+      border: 1px solid var(--accent);
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(124, 77, 255, 0.08));
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.22);
+    }
+    .unread-avatar-glow {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 10px var(--accent-glow) !important;
+    }
+    .unread-dot-inline {
+      color: var(--accent);
+      font-size: 11px;
+      margin-left: 4px;
+      animation: pulseDot 1.5s infinite;
+    }
+    .unread-counter-badge {
+      background: var(--accent);
+      color: #050B14;
+      font-size: 11px;
+      font-weight: 800;
+      border-radius: 12px;
+      padding: 2px 7px;
+      min-width: 20px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.7);
+      animation: pulseBadge 2s infinite ease-in-out;
+    }
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); box-shadow: 0 0 14px rgba(0, 229, 255, 0.9); }
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
     .peer-item-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
     .peer-avatar {
@@ -615,6 +651,7 @@
     ];
     let groupsList = [];
     let chatHistories = {};
+    let unreadCountsByChat = {};
     let pendingMeshQueue = [];
     let relayBuffer = [];
 
@@ -1216,21 +1253,27 @@
       let html = '';
       for (const [id, peer] of discoveredPeers.entries()) {
         const isOnline = peer.isOnline !== false;
+        const unread = unreadCountsByChat[id] || 0;
         html += `
-          <div class="peer-item">
+          <div class="peer-item ${unread > 0 ? 'has-unread' : ''}">
             <div class="peer-item-left">
-              <div class="peer-avatar ble-avatar">${peer.displayName.charAt(0).toUpperCase()}</div>
+              <div class="peer-avatar ble-avatar ${unread > 0 ? 'unread-avatar-glow' : ''}">${peer.displayName.charAt(0).toUpperCase()}</div>
               <div>
-                <div class="peer-name">${peer.displayName}</div>
+                <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}">
+                  ${peer.displayName} ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
+                </div>
                 <div class="peer-sub">
                   <span class="live-dot" style="width:6px; height:6px;"></span>
-                  @${peer.username || 'ble_user'} • <span style="color:var(--accent); font-weight:bold;">⚡ Live Bluetooth Node</span>
+                  @${peer.username || 'ble_user'} • <span style="color:var(--accent); font-weight:bold;">⚡ Live Node</span>
                 </div>
               </div>
             </div>
-            <button class="btn btn-sm btn-accent" onclick="openChatRoom('${peer.id}', '${peer.displayName}', false)">
-              Message
-            </button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${unread > 0 ? `<div class="unread-counter-badge">${unread}</div>` : ''}
+              <button class="btn btn-sm btn-accent" onclick="openChatRoom('${peer.id}', '${peer.displayName.replace(/'/g, "\\'")}', false)">
+                Message
+              </button>
+            </div>
           </div>
         `;
       }
@@ -1318,18 +1361,24 @@
       let html = '';
       for (const group of groupsList) {
         const isDefault = defaultGroups.some(d => d.id === group.id);
+        const unread = unreadCountsByChat[group.id] || 0;
         html += `
-          <div class="peer-item" style="cursor:pointer;" onclick="openChatRoom('${group.id}', '${group.name}', true)">
+          <div class="peer-item ${unread > 0 ? 'has-unread' : ''}" style="cursor:pointer;" onclick="openChatRoom('${group.id}', '${group.name.replace(/'/g, "\\'")}', true)">
             <div class="peer-item-left">
-              <div class="peer-avatar group-avatar">${isDefault ? '📢' : '#'}</div>
+              <div class="peer-avatar group-avatar ${unread > 0 ? 'unread-avatar-glow' : ''}">${isDefault ? '📢' : '#'}</div>
               <div>
-                <div class="peer-name">${group.name}</div>
+                <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}">
+                  ${group.name} ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
+                </div>
                 <div class="peer-sub">${group.desc}</div>
               </div>
             </div>
-            <button class="btn btn-sm btn-violet" style="width:auto; padding:0 14px;" onclick="event.stopPropagation(); openChatRoom('${group.id}', '${group.name}', true)">
-              Join Chat
-            </button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${unread > 0 ? `<div class="unread-counter-badge">${unread}</div>` : ''}
+              <button class="btn btn-sm btn-violet" style="width:auto; padding:0 14px;" onclick="event.stopPropagation(); openChatRoom('${group.id}', '${group.name.replace(/'/g, "\\'")}', true)">
+                Join Chat
+              </button>
+            </div>
           </div>
         `;
       }
@@ -1337,15 +1386,24 @@
     }
 
     // 13. Real Message Sending & Receiving Across the Chain
+    function refreshTotalUnreadCount() {
+      unreadCount = Object.values(unreadCountsByChat).reduce((sum, c) => sum + (Number(c) || 0), 0);
+      updateUnreadBadge();
+    }
+
     function openChatRoom(targetId, targetName, isGroup) {
       activeChatId = targetId;
+      unreadCountsByChat[targetId] = 0;
+      localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
+      refreshTotalUnreadCount();
+
       document.getElementById('chatTargetName').innerText = targetName;
       document.getElementById('chatTargetSub').innerText = isGroup ? '● Multi-Hop BLE Broadcast' : '● Direct Bluetooth Radio Link';
       renderChatMessages();
+      updateChatsList();
+      renderGroupsList();
+      renderPeersList();
       switchTab('screen-chatroom');
-
-      unreadCount = 0;
-      updateUnreadBadge();
     }
 
     function sendMessage() {
@@ -1435,16 +1493,21 @@
         playMessageChime();
         if (navigator.vibrate) navigator.vibrate([150, 70, 150]);
 
-        if (activeChatId === convId || (isGroupMsg && activeChatId === envelope.destinationId)) {
+        const isCurrentlyOpen = (activeChatId === convId || (isGroupMsg && activeChatId === envelope.destinationId));
+        if (isCurrentlyOpen) {
+          unreadCountsByChat[convId] = 0;
           renderChatMessages();
         } else {
-          unreadCount++;
-          updateUnreadBadge();
+          unreadCountsByChat[convId] = (unreadCountsByChat[convId] || 0) + 1;
           const targetTitle = isGroupMsg ? (groupsList.find(g => g.id === convId)?.name || 'Group') : envelope.senderName;
           showToastNotification(targetTitle, `${envelope.senderName}: ${envelope.text}`, convId);
         }
 
+        localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
+        refreshTotalUnreadCount();
         updateChatsList();
+        renderGroupsList();
+        renderPeersList();
       }
     }
 
@@ -1463,7 +1526,10 @@
     function clearCurrentChat() {
       if (activeChatId && chatHistories[activeChatId]) {
         chatHistories[activeChatId] = [];
+        unreadCountsByChat[activeChatId] = 0;
         localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
+        localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
+        refreshTotalUnreadCount();
         renderChatMessages();
         updateChatsList();
       }
@@ -1526,6 +1592,11 @@
       if (raw) {
         try { chatHistories = JSON.parse(raw); } catch (_) {}
       }
+      const rawUnread = localStorage.getItem('qc_unread_counts');
+      if (rawUnread) {
+        try { unreadCountsByChat = JSON.parse(rawUnread); } catch (_) {}
+      }
+      refreshTotalUnreadCount();
       updateChatsList();
     }
 
@@ -1544,6 +1615,19 @@
         return;
       }
 
+      // Sort conversations: Unread first, then latest message timestamp
+      keys.sort((a, b) => {
+        const unreadA = unreadCountsByChat[a] || 0;
+        const unreadB = unreadCountsByChat[b] || 0;
+        if (unreadA !== unreadB) return unreadB - unreadA;
+
+        const msgsA = chatHistories[a] || [];
+        const msgsB = chatHistories[b] || [];
+        const timeA = msgsA.length ? (msgsA[msgsA.length - 1].createdAt || 0) : 0;
+        const timeB = msgsB.length ? (msgsB[msgsB.length - 1].createdAt || 0) : 0;
+        return timeB - timeA;
+      });
+
       let html = '';
       for (const convId of keys) {
         const msgs = chatHistories[convId];
@@ -1551,18 +1635,30 @@
         const isGroup = convId.startsWith('group_');
         const peer = discoveredPeers.get(convId);
         const group = groupsList.find(g => g.id === convId);
-        const title = isGroup ? (group ? group.name : 'Community Group') : (peer ? peer.displayName : 'Direct Chat');
+        const title = isGroup ? (group ? group.name : 'Community Group') : (peer ? peer.displayName : (convId.startsWith('ble_') ? 'Nearby BLE Phone' : 'Direct Chat'));
+        const unread = unreadCountsByChat[convId] || 0;
 
         html += `
-          <div class="peer-item" onclick="openChatRoom('${convId}', '${title}', ${isGroup})" style="cursor:pointer;">
-            <div class="peer-item-left">
-              <div class="peer-avatar ${isGroup ? 'group-avatar' : ''}">${isGroup ? '👥' : title.charAt(0).toUpperCase()}</div>
-              <div>
-                <div class="peer-name">${title}</div>
-                <div class="peer-sub">${lastMsg ? (lastMsg.isMe ? 'You: ' : '') + lastMsg.text : 'No messages'}</div>
+          <div class="peer-item ${unread > 0 ? 'has-unread' : ''}" onclick="openChatRoom('${convId}', '${title.replace(/'/g, "\\'")}', ${isGroup})" style="cursor:pointer;">
+            <div class="peer-item-left" style="min-width:0; flex:1;">
+              <div class="peer-avatar ${isGroup ? 'group-avatar' : ''} ${unread > 0 ? 'unread-avatar-glow' : ''}">
+                ${isGroup ? '👥' : title.charAt(0).toUpperCase()}
+              </div>
+              <div style="min-width:0; flex:1; overflow:hidden;">
+                <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}">
+                  ${title} ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
+                </div>
+                <div class="peer-sub" style="${unread > 0 ? 'color:#FFFFFF; font-weight:600;' : ''}">
+                  ${lastMsg ? (lastMsg.isMe ? 'You: ' : (isGroup ? lastMsg.senderName + ': ' : '')) + lastMsg.text : 'No messages'}
+                </div>
               </div>
             </div>
-            <div style="font-size:10px; color:var(--text-muted);">${lastMsg ? lastMsg.time : ''}</div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; margin-left:10px;">
+              <div style="font-size:10.5px; color:${unread > 0 ? 'var(--accent)' : 'var(--text-muted)'}; font-weight:${unread > 0 ? '700' : '400'};">
+                ${lastMsg ? lastMsg.time : ''}
+              </div>
+              ${unread > 0 ? `<div class="unread-counter-badge">${unread}</div>` : ''}
+            </div>
           </div>
         `;
       }
