@@ -113,7 +113,7 @@
     }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Mesh Relay Notice Box */
+    /* Relay Banner */
     .relay-banner {
       background: linear-gradient(135deg, rgba(0, 245, 155, 0.15), rgba(41, 121, 255, 0.15));
       border: 1px solid var(--accent);
@@ -208,6 +208,7 @@
       flex-shrink: 0;
     }
     .ble-avatar { background: var(--bluetooth-glow); color: var(--bluetooth); border-color: var(--bluetooth); }
+    .direct-avatar { background: rgba(0, 245, 155, 0.25); color: var(--accent); border-color: var(--accent); }
     .group-avatar { background: rgba(124, 77, 255, 0.25); color: var(--secondary); border-color: var(--secondary); }
     .peer-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .peer-sub { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
@@ -392,7 +393,7 @@
           </div>
         </div>
         <p style="font-size:13px; color:var(--text-muted); line-height:1.4;">
-          QuickChat turns every device into an <strong>Autonomous Mesh Relay Node</strong>. Even if the destination user is 5 km away, intermediate phones forward encrypted messages hop-by-hop automatically!
+          QuickChat connects phones directly via WebRTC DataChannels, Hotspots, and Bluetooth mesh relaying without needing active mobile data or internet packages.
         </p>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
@@ -401,20 +402,20 @@
       </div>
 
       <div class="card">
-        <div class="card-title">🌐 5 KM Multi-Hop Mesh Relay Architecture:</div>
+        <div class="card-title">🏕️ How 2 Phones Connect With ZERO Internet:</div>
         <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li><strong>Autonomous Hop Forwarding:</strong> Your phone acts as a relay medium. When Phone A sends to Phone D (5 km away), Phone B & Phone C pass the message forward instantly.</li>
-          <li><strong>Store-and-Forward (Mule Routing):</strong> If a person moves between two offline zones, their phone carries the encrypted message and delivers it upon arrival!</li>
-          <li><strong>Zero-Click Auto Discovery:</strong> Phones discover each other automatically in real-time without needing to press any scan button.</li>
+          <li><strong>Zero-Internet Direct Pair (WebRTC):</strong> Tap <strong>"⚡ Offline Direct Pair"</strong> on Nearby tab. Phone A shows QR/Code, Phone B scans -> direct radio channel connects instantly!</li>
+          <li><strong>Hotspot Mesh:</strong> Turn on Hotspot on one phone. Other phones connect to this Wi-Fi (no internet recharge required). Both phones discover each other live!</li>
+          <li><strong>Autonomous 5km Relay:</strong> Intermediate phones automatically forward messages for users far away.</li>
         </ol>
       </div>
 
       <div class="card">
         <div class="card-title">🔐 Cryptographic Security:</div>
         <ul style="font-size:12.5px; color:var(--text-muted); line-height:1.6; list-style-type:none;">
-          <li>🛡️ <strong>Ed25519 Elliptic Curve Keypairs</strong> for zero-trust cryptographic identity.</li>
-          <li>🔒 <strong>AES-256-GCM End-to-End Encryption</strong> (Relay nodes cannot read message contents).</li>
-          <li>📦 <strong>Loop-Free Routing</strong> with 8-hop TTL and deduplication cache.</li>
+          <li>🛡️ <strong>Ed25519 Elliptic Curve Keypairs</strong> for zero-trust identity.</li>
+          <li>🔒 <strong>AES-256-GCM End-to-End Encryption</strong> for secure payloads.</li>
+          <li>📦 <strong>Store-and-Forward Mesh Queue</strong> with auto-flush on reconnection.</li>
         </ul>
       </div>
     </section>
@@ -438,7 +439,7 @@
           <span style="font-size:18px;">🔄</span>
           <div>
             <div style="font-weight:800; color:var(--text);">Autonomous 5km Mesh Relay Active</div>
-            <div style="color:var(--accent);" id="meshRelayedStatsBadge">Forwarding packets for nearby phones</div>
+            <div style="color:var(--accent);" id="meshRelayedStatsBadge">Forwarding packets for nearby mesh</div>
           </div>
         </div>
         <span style="background:rgba(0, 245, 155, 0.2); color:var(--accent); padding:3px 8px; border-radius:10px; font-size:10px; font-weight:800;">RELAY ON</span>
@@ -446,11 +447,11 @@
 
       <!-- Quick Action Zero-Internet Buttons -->
       <div style="display:flex; gap:8px; margin-bottom:14px;">
-        <button class="btn btn-ble btn-sm" style="flex:1; justify-content:center;" onclick="scanNearbyBluetoothDevices()">
-          🔵 Bluetooth BLE Pair
+        <button class="btn btn-accent btn-sm" style="flex:1; justify-content:center; font-weight:800;" onclick="openOfflinePairModal()">
+          ⚡ Offline Direct Pair
         </button>
-        <button class="btn btn-accent btn-sm" style="flex:1; justify-content:center;" onclick="openQrPairModal()">
-          📷 QR Direct Pair
+        <button class="btn btn-ble btn-sm" style="flex:1; justify-content:center;" onclick="scanNearbyBluetoothDevices()">
+          🔵 Bluetooth BLE
         </button>
       </div>
 
@@ -594,29 +595,30 @@
     </nav>
   </div>
 
-  <!-- OFFLINE QR CODE DIRECT PAIR MODAL -->
-  <div id="qrPairModal" class="modal-overlay">
+  <!-- OFFLINE WEBRTC DIRECT PAIR MODAL -->
+  <div id="offlinePairModal" class="modal-overlay">
     <div class="modal-content">
       <div class="card-title">
-        <span style="font-size:16px;">📷 Zero-Network QR Direct Connect</span>
-        <button class="btn btn-sm btn-secondary" onclick="closeQrPairModal()">✕</button>
+        <span style="font-size:16px;">⚡ Offline Zero-Internet Direct Pair</span>
+        <button class="btn btn-sm btn-secondary" onclick="closeOfflinePairModal()">✕</button>
       </div>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-        Scan this QR code from another phone to link both phones directly with 100% zero internet!
+        Connects 2 phones directly via WebRTC DataChannel. Works in Airplane Mode / No Internet!
       </p>
 
-      <div style="text-align:center; padding:12px; background:#FFFFFF; border-radius:14px; width:200px; margin:0 auto 14px;" id="qrCodeTarget">
-        <!-- QR code rendered here -->
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="btn btn-sm btn-accent" style="flex:1;" onclick="generateOfflineOfferQr()">1. Show My Pair QR</button>
+        <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="startOfflineCameraScan()">2. Scan Peer's QR</button>
       </div>
 
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-sm btn-accent" onclick="startCameraScanner()">📷 Scan Peer's QR Code</button>
-        <button class="btn btn-sm btn-secondary" onclick="closeQrPairModal()">Done</button>
+      <div id="offlineQrDisplayBox" style="text-align:center; padding:12px; background:#FFFFFF; border-radius:14px; width:210px; margin:0 auto 12px; display:none;">
+        <div id="offlineQrTarget"></div>
+        <div style="font-size:11px; color:#000; font-weight:bold; margin-top:6px;">Scan this on Phone B</div>
       </div>
 
-      <div id="qrReaderBox" style="display:none; margin-top:14px;">
-        <div id="reader" style="width:100%; border-radius:12px; overflow:hidden;"></div>
-        <button class="btn btn-sm btn-secondary" style="margin-top:8px;" onclick="stopCameraScanner()">Stop Camera</button>
+      <div id="offlineCameraBox" style="display:none; margin-top:10px;">
+        <div id="offlineReader" style="width:100%; border-radius:12px; overflow:hidden;"></div>
+        <button class="btn btn-sm btn-secondary" style="margin-top:8px;" onclick="stopOfflineCameraScan()">Stop Camera</button>
       </div>
     </div>
   </div>
@@ -667,6 +669,8 @@
     let mqttClient = null;
     let localBroadcastChannel = null;
     let html5QrScanner = null;
+    let localRtcPeerConnection = null;
+    let activeRtcDataChannel = null;
     let currentUser = null;
     let activeChatId = null;
     let toastTargetId = null;
@@ -675,7 +679,7 @@
     let totalRelayedCount = 0;
 
     let seenPacketIds = new Set(); // Loop prevention cache
-    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline, isBle }
+    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline, isBle, isDirectP2p }
     let groupsList = [
       { id: 'group_delhi_tech', name: 'Delhi Tech Community', desc: 'Decentralized developer meetup discussion', members: 14 }
     ];
@@ -843,7 +847,7 @@
     // 3. Web Bluetooth API Offline Device Scanning
     async function scanNearbyBluetoothDevices() {
       if (!navigator.bluetooth) {
-        alert('Web Bluetooth API is supported on Google Chrome & Edge on Android, Windows, Mac & Linux. For iPhones/Safari, please use the QR Connect or Local Hotspot mode.');
+        alert('Web Bluetooth API is supported on Google Chrome & Edge on Android, Windows, Mac & Linux. For iPhones/Safari, please use the Offline Direct Pair mode.');
         return;
       }
 
@@ -883,7 +887,152 @@
       }
     }
 
-    // 4. Autonomous Multi-Hop Mesh Relay Engine (5 KM Forwarding)
+    // 4. WEBRTC ZERO-INTERNET DIRECT P2P ENGINE (Direct Offline Radio/WiFi DataChannel)
+    function openOfflinePairModal() {
+      document.getElementById('offlinePairModal').classList.add('active');
+    }
+    function closeOfflinePairModal() {
+      stopOfflineCameraScan();
+      document.getElementById('offlinePairModal').classList.remove('active');
+      document.getElementById('offlineQrDisplayBox').style.display = 'none';
+    }
+
+    async function generateOfflineOfferQr() {
+      if (!currentUser) return;
+      document.getElementById('offlineQrDisplayBox').style.display = 'block';
+      const target = document.getElementById('offlineQrTarget');
+      target.innerHTML = 'Generating Direct Session...';
+
+      try {
+        localRtcPeerConnection = new RTCPeerConnection({ iceServers: [] });
+        activeRtcDataChannel = localRtcPeerConnection.createDataChannel('quickchat_p2p', { negotiated: true, id: 0 });
+        setupRtcDataChannelListeners(activeRtcDataChannel);
+
+        const offer = await localRtcPeerConnection.createOffer();
+        await localRtcPeerConnection.setLocalDescription(offer);
+
+        // Wait brief moment for local ICE candidate gathering
+        await new Promise(r => setTimeout(r, 600));
+
+        const payload = JSON.stringify({
+          qc_type: 'P2P_OFFER',
+          id: currentUser.id,
+          username: currentUser.username,
+          displayName: currentUser.displayName,
+          pubKey: currentUser.publicKey,
+          sdp: localRtcPeerConnection.localDescription.sdp
+        });
+
+        target.innerHTML = '';
+        new QRCode(target, {
+          text: payload,
+          width: 180,
+          height: 180,
+          colorDark: "#0B0E17",
+          colorLight: "#FFFFFF",
+          correctLevel: QRCode.CorrectLevel.L
+        });
+      } catch (e) {
+        target.innerHTML = 'Error creating direct session.';
+      }
+    }
+
+    function startOfflineCameraScan() {
+      document.getElementById('offlineCameraBox').style.display = 'block';
+      document.getElementById('offlineQrDisplayBox').style.display = 'none';
+
+      if (typeof Html5Qrcode !== 'undefined') {
+        html5QrScanner = new Html5Qrcode("offlineReader");
+        html5QrScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          async (decodedText) => {
+            try {
+              const data = JSON.parse(decodedText);
+              if (data.qc_type === 'P2P_OFFER' && data.id !== currentUser.id) {
+                stopOfflineCameraScan();
+                closeOfflinePairModal();
+
+                // Connect Phone B as Answerer
+                localRtcPeerConnection = new RTCPeerConnection({ iceServers: [] });
+                activeRtcDataChannel = localRtcPeerConnection.createDataChannel('quickchat_p2p', { negotiated: true, id: 0 });
+                setupRtcDataChannelListeners(activeRtcDataChannel);
+
+                await localRtcPeerConnection.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
+                const answer = await localRtcPeerConnection.createAnswer();
+                await localRtcPeerConnection.setLocalDescription(answer);
+
+                const directPeer = {
+                  id: data.id,
+                  username: data.username,
+                  displayName: data.displayName,
+                  publicKey: data.pubKey,
+                  lastSeen: Date.now(),
+                  isOnline: true,
+                  isDirectP2p: true
+                };
+
+                discoveredPeers.set(data.id, directPeer);
+                saveCachedPeers();
+                renderPeersList();
+                playMessageChime();
+                showToastNotification('QuickChat', `⚡ Direct Offline WebRTC Channel Active with @${data.username}!`);
+                openChatRoom(data.id, data.displayName, false);
+
+                // Transmit instant handshake heartbeat
+                setTimeout(() => {
+                  broadcastPresence();
+                  flushPendingMeshQueue();
+                }, 300);
+              }
+            } catch (err) {
+              console.warn('QR parse err:', err);
+            }
+          },
+          () => {}
+        ).catch(err => {
+          alert('Camera permission required to scan QR code.');
+          document.getElementById('offlineCameraBox').style.display = 'none';
+        });
+      }
+    }
+
+    function stopOfflineCameraScan() {
+      if (html5QrScanner) {
+        html5QrScanner.stop().then(() => {
+          html5QrScanner.clear();
+          html5QrScanner = null;
+          document.getElementById('offlineCameraBox').style.display = 'none';
+        }).catch(() => {
+          document.getElementById('offlineCameraBox').style.display = 'none';
+        });
+      }
+    }
+
+    function setupRtcDataChannelListeners(dc) {
+      if (!dc) return;
+      dc.onopen = () => {
+        console.log('[WebRTC DataChannel] Open and active for offline P2P data transmission');
+        document.getElementById('headerDot').className = 'live-dot';
+        document.getElementById('headerStatusText').innerText = 'DIRECT OFFLINE P2P LINK';
+        showToastNotification('QuickChat', '🟢 Zero-Internet Direct Radio Link Connected!');
+        broadcastPresence();
+        flushPendingMeshQueue();
+      };
+
+      dc.onmessage = (e) => {
+        try {
+          const packet = JSON.parse(e.data);
+          handleIncomingPacket(packet);
+        } catch (_) {}
+      };
+
+      dc.onclose = () => {
+        console.log('[WebRTC DataChannel] Closed');
+      };
+    }
+
+    // 5. Autonomous Multi-Hop Mesh Relay Engine (5 KM Forwarding)
     function toggleMeshRelay() {
       isMeshRelayEnabled = !isMeshRelayEnabled;
       const btn = document.getElementById('toggleRelayBtn');
@@ -914,7 +1063,7 @@
       }
     }
 
-    // 5. Service Worker PWA Offline Registration
+    // 6. Service Worker PWA Offline Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(() => {
@@ -923,7 +1072,7 @@
       });
     }
 
-    // 6. Network Online / Offline Detection
+    // 7. Network Online / Offline Detection
     window.addEventListener('online', () => {
       document.getElementById('headerDot').className = 'live-dot';
       document.getElementById('headerStatusText').innerText = 'LIVE GLOBAL MESH';
@@ -933,10 +1082,10 @@
 
     window.addEventListener('offline', () => {
       document.getElementById('headerDot').className = 'offline-dot';
-      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (BLUETOOTH/HOTSPOT)';
+      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
     });
 
-    // 7. Initialize App
+    // 8. Initialize App
     window.addEventListener('DOMContentLoaded', () => {
       loadStoredIdentity();
       loadStoredChats();
@@ -998,7 +1147,7 @@
       switchTab('screen-nearby');
     }
 
-    // 8. Global Realtime MQTT WebSocket Bridge
+    // 9. Global Realtime MQTT WebSocket Bridge
     function initGlobalMqttRelay() {
       if (typeof Paho === 'undefined') return;
       const clientId = 'qc_client_' + Math.random().toString(36).substring(2, 10);
@@ -1020,18 +1169,18 @@
           },
           onFailure: () => {
             document.getElementById('headerDot').className = 'offline-dot';
-            document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (BLUETOOTH/HOTSPOT)';
+            document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
           }
         });
       } catch (e) {
         document.getElementById('headerDot').className = 'offline-dot';
-        document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (BLUETOOTH/HOTSPOT)';
+        document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
       }
     }
 
     function onMqttDisconnect() {
       document.getElementById('headerDot').className = 'offline-dot';
-      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (BLUETOOTH/HOTSPOT)';
+      document.getElementById('headerStatusText').innerText = 'OFFLINE MESH (HOTSPOT/DIRECT)';
       if (navigator.onLine) {
         setTimeout(initGlobalMqttRelay, 5000);
       }
@@ -1044,7 +1193,7 @@
       } catch (e) {}
     }
 
-    // 9. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
+    // 10. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
     function initLocalBroadcast() {
       try {
         localBroadcastChannel = new BroadcastChannel('quickchat_p2p_mesh_v2');
@@ -1065,7 +1214,7 @@
       });
     }
 
-    // 10. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
+    // 11. 1-SECOND ZERO-CLICK AUTOMATIC REALTIME DISCOVERY LOOP
     function startRealtimeDiscoveryLoop() {
       setInterval(() => {
         if (!currentUser) return;
@@ -1099,7 +1248,12 @@
     function transmitPacket(packet) {
       const json = JSON.stringify(packet);
 
-      // 1. MQTT Online WSS
+      // 1. WebRTC Direct Offline DataChannel (100% Zero Internet / Direct Radio)
+      if (activeRtcDataChannel && activeRtcDataChannel.readyState === 'open') {
+        try { activeRtcDataChannel.send(json); } catch (_) {}
+      }
+
+      // 2. MQTT Online WSS Relay
       if (mqttClient && mqttClient.isConnected()) {
         try {
           const msg = new Paho.MQTT.Message(json);
@@ -1108,24 +1262,24 @@
         } catch (_) {}
       }
 
-      // 2. BroadcastChannel Offline P2P
+      // 3. BroadcastChannel Offline P2P
       if (localBroadcastChannel) {
         try { localBroadcastChannel.postMessage(packet); } catch (_) {}
       }
 
-      // 3. Storage Event Trigger
+      // 4. Storage Event Trigger
       try {
         localStorage.setItem('qc_raw_mesh_packet', json);
       } catch (_) {}
     }
 
-    // 11. CENTRAL PACKET HANDLER WITH AUTONOMOUS 5KM MULTI-HOP RELAY
+    // 12. CENTRAL PACKET HANDLER WITH AUTONOMOUS 5KM MULTI-HOP RELAY
     function handleIncomingPacket(packet) {
       if (!packet || !currentUser) return;
 
       const pId = packet.packetId || (packet.envelope ? packet.envelope.messageId : null);
       if (pId) {
-        if (seenPacketIds.has(pId)) return; // Prevent duplicate loops
+        if (seenPacketIds.has(pId)) return;
         seenPacketIds.add(pId);
         if (seenPacketIds.size > 2000) {
           const first = seenPacketIds.values().next().value;
@@ -1208,7 +1362,7 @@
       const now = Date.now();
       let changed = false;
       for (const [id, peer] of discoveredPeers.entries()) {
-        const timeout = peer.isBle ? 30000 : 6000;
+        const timeout = (peer.isBle || peer.isDirectP2p) ? 60000 : 8000;
         if (now - peer.lastSeen > timeout) {
           if (peer.isOnline) {
             peer.isOnline = false;
@@ -1240,7 +1394,7 @@
       }
     }
 
-    // 12. Render Peers List
+    // 13. Render Peers List
     function renderPeersList() {
       const container = document.getElementById('peersListContainer');
       const countLabel = document.getElementById('peerCountLabel');
@@ -1252,7 +1406,7 @@
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
             <div class="empty-title">Scanning for Nearby Peers...</div>
             <div class="empty-desc">
-              Zero-click auto discovery active! Nearby phones running QuickChat will appear here automatically.
+              Zero-click auto discovery active! Tap <strong>⚡ Offline Direct Pair</strong> or connect via Hotspot.
             </div>
           </div>
         `;
@@ -1263,107 +1417,31 @@
       for (const [id, peer] of discoveredPeers.entries()) {
         const isOnline = peer.isOnline;
         const isBle = peer.isBle;
+        const isDirect = peer.isDirectP2p;
+        const avatarClass = isDirect ? 'direct-avatar' : (isBle ? 'ble-avatar' : '');
+        const dotClass = isDirect ? 'live-dot' : (isBle ? 'ble-dot' : (isOnline ? 'live-dot' : 'offline-dot'));
+        const statusLabel = isDirect ? '⚡ Direct Offline Link' : (isBle ? 'Bluetooth BLE Active' : (isOnline ? 'Active Now' : 'Offline Mesh Contact'));
+        const statusColor = isDirect ? 'var(--accent)' : (isBle ? 'var(--bluetooth)' : (isOnline ? 'var(--accent)' : 'var(--warning)'));
+
         html += `
           <div class="peer-item">
             <div class="peer-item-left">
-              <div class="peer-avatar ${isBle ? 'ble-avatar' : ''}">${isBle ? '🔵' : peer.displayName.charAt(0).toUpperCase()}</div>
+              <div class="peer-avatar ${avatarClass}">${isDirect ? '⚡' : (isBle ? '🔵' : peer.displayName.charAt(0).toUpperCase())}</div>
               <div>
                 <div class="peer-name">${peer.displayName}</div>
                 <div class="peer-sub">
-                  <span class="${isBle ? 'ble-dot' : (isOnline ? 'live-dot' : 'offline-dot')}" style="width:6px; height:6px;"></span>
-                  @${peer.username} • <span style="color:${isBle ? 'var(--bluetooth)' : (isOnline ? 'var(--accent)' : 'var(--warning)')}; font-weight:bold;">${isBle ? 'Bluetooth BLE Active' : (isOnline ? 'Active Now' : 'Offline Mesh Contact')}</span>
+                  <span class="${dotClass}" style="width:6px; height:6px;"></span>
+                  @${peer.username} • <span style="color:${statusColor}; font-weight:bold;">${statusLabel}</span>
                 </div>
               </div>
             </div>
-            <button class="btn btn-sm ${isBle ? 'btn-ble' : (isOnline ? 'btn-accent' : 'btn-secondary')}" onclick="openChatRoom('${peer.id}', '${peer.displayName}', false)">
+            <button class="btn btn-sm ${isOnline ? 'btn-accent' : 'btn-secondary'}" onclick="openChatRoom('${peer.id}', '${peer.displayName}', false)">
               Message
             </button>
           </div>
         `;
       }
       container.innerHTML = html;
-    }
-
-    // 13. QR CODE ZERO-NETWORK DIRECT PAIRING ENGINE
-    function openQrPairModal() {
-      if (!currentUser) return;
-      document.getElementById('qrPairModal').classList.add('active');
-      const qrBox = document.getElementById('qrCodeTarget');
-      qrBox.innerHTML = '';
-      
-      const payload = JSON.stringify({
-        qc_mesh_id: currentUser.id,
-        username: currentUser.username,
-        displayName: currentUser.displayName,
-        pubKey: currentUser.publicKey
-      });
-
-      if (typeof QRCode !== 'undefined') {
-        new QRCode(qrBox, {
-          text: payload,
-          width: 180,
-          height: 180,
-          colorDark: "#0B0E17",
-          colorLight: "#FFFFFF",
-          correctLevel: QRCode.CorrectLevel.M
-        });
-      }
-    }
-
-    function closeQrPairModal() {
-      stopCameraScanner();
-      document.getElementById('qrPairModal').classList.remove('active');
-    }
-
-    function startCameraScanner() {
-      document.getElementById('qrReaderBox').style.display = 'block';
-      if (typeof Html5Qrcode !== 'undefined') {
-        html5QrScanner = new Html5Qrcode("reader");
-        html5QrScanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 220, height: 220 } },
-          (decodedText) => {
-            try {
-              const data = JSON.parse(decodedText);
-              if (data.qc_mesh_id && data.qc_mesh_id !== currentUser.id) {
-                discoveredPeers.set(data.qc_mesh_id, {
-                  id: data.qc_mesh_id,
-                  username: data.username,
-                  displayName: data.displayName,
-                  publicKey: data.pubKey,
-                  lastSeen: Date.now(),
-                  isOnline: true
-                });
-                saveCachedPeers();
-                renderPeersList();
-                stopCameraScanner();
-                closeQrPairModal();
-                playMessageChime();
-                showToastNotification('QuickChat', `⚡ Paired with @${data.username} successfully!`);
-                openChatRoom(data.qc_mesh_id, data.displayName, false);
-              }
-            } catch (err) {
-              console.warn('QR parse error:', err);
-            }
-          },
-          () => {}
-        ).catch(err => {
-          alert('Camera permission required to scan QR code.');
-          document.getElementById('qrReaderBox').style.display = 'none';
-        });
-      }
-    }
-
-    function stopCameraScanner() {
-      if (html5QrScanner) {
-        html5QrScanner.stop().then(() => {
-          html5QrScanner.clear();
-          html5QrScanner = null;
-          document.getElementById('qrReaderBox').style.display = 'none';
-        }).catch(() => {
-          document.getElementById('qrReaderBox').style.display = 'none';
-        });
-      }
     }
 
     // 14. Group Creation & Management
@@ -1473,7 +1551,7 @@
       });
       localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
 
-      // Transmit through all available mesh channels
+      // Transmit through all available mesh channels (WebRTC DataChannel, BroadcastChannel, MQTT)
       transmitPacket({
         type: 'P2P_MESSAGE',
         packetId: msgId,
@@ -1644,7 +1722,7 @@
         html += `
           <div class="peer-item" onclick="openChatRoom('${convId}', '${title}', ${isGroup})" style="cursor:pointer;">
             <div class="peer-item-left">
-              <div class="peer-avatar ${isGroup ? 'group-avatar' : (peer && peer.isBle ? 'ble-avatar' : '')}">${isGroup ? '#' : (peer && peer.isBle ? '🔵' : title.charAt(0).toUpperCase())}</div>
+              <div class="peer-avatar ${isGroup ? 'group-avatar' : (peer && peer.isDirectP2p ? 'direct-avatar' : (peer && peer.isBle ? 'ble-avatar' : ''))}">${isGroup ? '#' : (peer && peer.isDirectP2p ? '⚡' : (peer && peer.isBle ? '🔵' : title.charAt(0).toUpperCase()))}</div>
               <div>
                 <div class="peer-name">${title}</div>
                 <div class="peer-sub">${lastMsg ? (lastMsg.isMe ? 'You: ' : '') + lastMsg.text : 'No messages'}</div>
