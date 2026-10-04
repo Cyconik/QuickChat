@@ -1048,7 +1048,11 @@
       // Direct or Group Message Packet with Multi-Hop Chain Forwarding
       if (packet.type === 'P2P_MESSAGE') {
         const envelope = packet.envelope;
-        const isForMe = envelope.destinationId === currentUser.id;
+        const isForMe = envelope.destinationId === currentUser.id || 
+                        envelope.destinationId === 'broadcast' || 
+                        envelope.destinationId.startsWith('ble_') ||
+                        discoveredPeers.has(envelope.destinationId) ||
+                        directMeshLinks.has(envelope.destinationId);
         const isGroupMsg = envelope.destinationId.startsWith('group_');
 
         // Case A: Group Message or Direct message for ME -> Deliver!
@@ -1105,8 +1109,8 @@
       const now = Date.now();
       let changed = false;
       for (const [id, peer] of discoveredPeers.entries()) {
-        if (now - peer.lastSeen > 8000) {
-          if (peer.isOnline && !activeWebRtcChannels.has(id)) {
+        if (now - peer.lastSeen > 25000) {
+          if (peer.isOnline && !directMeshLinks.has(id)) {
             peer.isOnline = false;
             changed = true;
           }
@@ -1159,30 +1163,29 @@
       const container = document.getElementById('meshChainVisualizerBox');
       const countBadge = document.getElementById('activeLinksCountBadge');
       
-      const directCount = activeWebRtcChannels.size + directMeshLinks.size;
-      countBadge.innerText = `${activeWebRtcChannels.size} WebRTC Links • ${discoveredPeers.size} Nodes`;
+      const directCount = directMeshLinks.size;
+      countBadge.innerText = `${directMeshLinks.size} Bluetooth Nodes • ${discoveredPeers.size} Reachable`;
 
       if (discoveredPeers.size === 0 && directCount === 0) {
         container.innerHTML = `
           <div class="mesh-chain-node">📍 You (Node A)</div>
           <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Scan QR to Link Node B</div>
+          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Nearby Phone B (Relay)</div>
           <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Node C (Relay)</div>
+          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Phone C (Relay)</div>
           <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Node D (End)</div>
+          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Phone D (End)</div>
         `;
         return;
       }
 
-      let html = `<div class="mesh-chain-node" style="border-color:var(--accent);">📍 You (${currentUser.displayName})</div>`;
+      let html = `<div class="mesh-chain-node" style="border-color:var(--accent);">📍 You (${currentUser ? currentUser.displayName : 'Node A'})</div>`;
       for (const [id, peer] of discoveredPeers.entries()) {
-        const isRtc = activeWebRtcChannels.has(id);
-        const isDirect = directMeshLinks.has(id) || isRtc;
+        const isDirect = directMeshLinks.has(id) || peer.isOnline;
         html += `
-          <div class="mesh-chain-link">${isRtc ? '⚡🟢' : '➔➔'}</div>
-          <div class="mesh-chain-node" style="${isRtc ? 'border-color:var(--accent); color:var(--accent); font-weight:800;' : (isDirect ? 'border-color:var(--primary);' : 'border-color:var(--secondary);')}">
-            ${peer.displayName} ${isRtc ? '⚡' : '🔗'}
+          <div class="mesh-chain-link">⚡🟢</div>
+          <div class="mesh-chain-node" style="border-color:var(--accent); color:var(--accent); font-weight:800;">
+            ${peer.displayName} 📡
           </div>
         `;
       }
@@ -1198,9 +1201,9 @@
         container.innerHTML = `
           <div class="empty-state">
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
-            <div class="empty-title">Scanning for Multi-Hop Mesh Nodes...</div>
+            <div class="empty-title">Scanning for Bluetooth Mesh Nodes...</div>
             <div class="empty-desc">
-              Tap <strong>"Mesh Link"</strong> at the top to connect via QR DataChannels, or join <strong>#Nearby-Public-Mesh</strong> to chat across the chain.
+              Make sure Bluetooth is ON on nearby phones. Join <strong>#Nearby-Public-Mesh</strong> to broadcast across all nodes.
             </div>
           </div>
         `;
@@ -1209,22 +1212,20 @@
 
       let html = '';
       for (const [id, peer] of discoveredPeers.entries()) {
-        const isRtc = activeWebRtcChannels.has(id);
-        const isOnline = peer.isOnline || isRtc;
-        const isDirect = directMeshLinks.has(id) || isRtc;
+        const isOnline = peer.isOnline !== false;
         html += `
           <div class="peer-item">
             <div class="peer-item-left">
-              <div class="peer-avatar ${isRtc ? '' : 'ble-avatar'}">${peer.displayName.charAt(0).toUpperCase()}</div>
+              <div class="peer-avatar ble-avatar">${peer.displayName.charAt(0).toUpperCase()}</div>
               <div>
                 <div class="peer-name">${peer.displayName}</div>
                 <div class="peer-sub">
-                  <span class="${isOnline ? 'live-dot' : 'offline-dot'}" style="width:6px; height:6px;"></span>
-                  @${peer.username} • <span style="color:${isRtc ? 'var(--accent)' : (isDirect ? 'var(--primary)' : 'var(--warning)')}; font-weight:bold;">${isRtc ? '⚡ Live WebRTC Socket' : (isDirect ? '⚡ Direct Linked Node' : '🔗 Multi-Hop Chain Route')}</span>
+                  <span class="live-dot" style="width:6px; height:6px;"></span>
+                  @${peer.username || 'ble_user'} • <span style="color:var(--accent); font-weight:bold;">⚡ Live Bluetooth Node</span>
                 </div>
               </div>
             </div>
-            <button class="btn btn-sm ${isOnline ? 'btn-accent' : 'btn-secondary'}" onclick="openChatRoom('${peer.id}', '${peer.displayName}', false)">
+            <button class="btn btn-sm btn-accent" onclick="openChatRoom('${peer.id}', '${peer.displayName}', false)">
               Message
             </button>
           </div>
@@ -1295,7 +1296,6 @@
         }
       }
 
-      // Also ensure any group from chatHistories is preserved
       if (chatHistories) {
         for (const cid in chatHistories) {
           if (cid.startsWith('group_') && !groupsList.some(g => g.id === cid)) {
@@ -1337,7 +1337,7 @@
     function openChatRoom(targetId, targetName, isGroup) {
       activeChatId = targetId;
       document.getElementById('chatTargetName').innerText = targetName;
-      document.getElementById('chatTargetSub').innerText = isGroup ? '● Multi-Hop Mesh Chain Active' : '● Autonomous Relay Route (A➔B➔C➔D)';
+      document.getElementById('chatTargetSub').innerText = isGroup ? '● Multi-Hop BLE Broadcast' : '● Direct Bluetooth Radio Link';
       renderChatMessages();
       switchTab('screen-chatroom');
 
@@ -1371,19 +1371,16 @@
       chatHistories[activeChatId].push({
         ...envelope,
         isMe: true,
-        status: '✓ Sent'
+        status: '✓ Sent via BLE'
       });
       localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
 
-      // Transmit through all available mesh links
+      // Transmit through Bluetooth Mesh
       transmitPacket({
         type: 'P2P_MESSAGE',
         packetId: msgId,
         envelope: envelope
       });
-
-      // Save into Store-and-Forward queue in case recipient is currently offline
-      pendingMeshQueue.push(envelope);
 
       renderChatMessages();
       updateChatsList();
@@ -1401,11 +1398,11 @@
     }
 
     function onMessageReceived(envelope, isGroupMsg) {
-      const convId = isGroupMsg ? envelope.destinationId : envelope.senderId;
+      let convId = isGroupMsg ? envelope.destinationId : (activeChatId && (activeChatId === envelope.senderId || activeChatId.startsWith('ble_')) ? activeChatId : envelope.senderId);
       if (!chatHistories[convId]) chatHistories[convId] = [];
 
       if (!chatHistories[convId].some(m => m.messageId === envelope.messageId)) {
-        const hopLabel = envelope.hops ? `✓✓ Received (${envelope.hops} Chain Hops)` : '✓✓ Received';
+        const hopLabel = envelope.hops ? `✓✓ Received (${envelope.hops} Hops)` : '✓✓ Received';
         chatHistories[convId].push({
           ...envelope,
           isMe: false,
@@ -1423,9 +1420,9 @@
           });
         }
 
-        // 🔔 ALWAYS PLAY CHIME AND VIBRATE ON EVERY SINGLE RECEIVED MESSAGE!
+        // 🔔 ALWAYS PLAY CHIME AND VIBRATE ON EVERY RECEIVED MESSAGE!
         playMessageChime();
-        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+        if (navigator.vibrate) navigator.vibrate([150, 70, 150]);
 
         if (activeChatId === convId) {
           renderChatMessages();

@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
@@ -69,6 +70,7 @@ public class NativeBleMeshPlugin extends Plugin {
     public static final UUID SERVICE_UUID = UUID.fromString("0000FE60-0000-1000-8000-00805F9B34FB");
     public static final UUID RX_CHAR_UUID = UUID.fromString("0000FE61-0000-1000-8000-00805F9B34FB"); // Write
     public static final UUID TX_CHAR_UUID = UUID.fromString("0000FE62-0000-1000-8000-00805F9B34FB"); // Notify
+    public static final UUID CCCD_UUID    = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeAdvertiser advertiser;
@@ -174,7 +176,7 @@ public class NativeBleMeshPlugin extends Plugin {
         int sentCount = 0;
         byte[] payloadBytes = jsonPayload.getBytes(StandardCharsets.UTF_8);
 
-        // Write directly to all connected GATT clients
+        // 1. Send to all peers where we are the GATT Client (Write to RX)
         for (Map.Entry<String, BluetoothGatt> entry : connectedGattClients.entrySet()) {
             BluetoothGatt gatt = entry.getValue();
             try {
@@ -182,15 +184,37 @@ public class NativeBleMeshPlugin extends Plugin {
                 if (service != null) {
                     BluetoothGattCharacteristic rxChar = service.getCharacteristic(RX_CHAR_UUID);
                     if (rxChar != null) {
+                        rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
                         rxChar.setValue(payloadBytes);
                         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                            gatt.writeCharacteristic(rxChar);
-                            sentCount++;
+                            boolean ok = gatt.writeCharacteristic(rxChar);
+                            if (ok) sentCount++;
                         }
                     }
                 }
             } catch (Exception e) {
-                Log.w(TAG, "Failed writing to peer: " + entry.getKey(), e);
+                Log.w(TAG, "Write characteristic error: " + entry.getKey(), e);
+            }
+        }
+
+        // 2. Send to all peers connected to our GATT Server (Notify TX)
+        if (gattServer != null) {
+            try {
+                BluetoothGattService serverService = gattServer.getService(SERVICE_UUID);
+                if (serverService != null) {
+                    BluetoothGattCharacteristic txChar = serverService.getCharacteristic(TX_CHAR_UUID);
+                    if (txChar != null) {
+                        txChar.setValue(payloadBytes);
+                        for (Map.Entry<String, BluetoothDevice> serverEntry : connectedGattServers.entrySet()) {
+                            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                                gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false);
+                                sentCount++;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Notify characteristic error: ", e);
             }
         }
 
@@ -221,7 +245,7 @@ public class NativeBleMeshPlugin extends Plugin {
                 super.onConnectionStateChange(device, status, newState);
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
                     connectedGattServers.put(device.getAddress(), device);
-                    Log.i(TAG, "GATT Client connected: " + device.getAddress());
+                    Log.i(TAG, "GATT Client connected to our server: " + device.getAddress());
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     connectedGattServers.remove(device.getAddress());
                     Log.i(TAG, "GATT Client disconnected: " + device.getAddress());
@@ -259,11 +283,13 @@ public class NativeBleMeshPlugin extends Plugin {
             BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_NOTIFY,
             BluetoothGattCharacteristic.PERMISSION_READ
         );
+        BluetoothGattDescriptor cccd = new BluetoothGattDescriptor(CCCD_UUID, BluetoothGattDescriptor.PERMISSION_WRITE | BluetoothGattDescriptor.PERMISSION_READ);
+        txChar.addDescriptor(cccd);
 
         service.addCharacteristic(rxChar);
         service.addCharacteristic(txChar);
         gattServer.addService(service);
-        Log.i(TAG, "GATT Server running with Service: " + SERVICE_UUID);
+        Log.i(TAG, "GATT Server running with Full Duplex Service: " + SERVICE_UUID);
     }
 
     private void stopGattServer() {
@@ -333,7 +359,6 @@ public class NativeBleMeshPlugin extends Plugin {
             return;
         }
 
-        // Empty filter to bypass OEM chip filtering bugs on 128-bit UUIDs
         List<ScanFilter> filters = new ArrayList<>();
 
         ScanSettings settings = new ScanSettings.Builder()
@@ -387,7 +412,7 @@ public class NativeBleMeshPlugin extends Plugin {
             String addr = device.getAddress();
             if (!discoveredDevices.containsKey(addr)) {
                 discoveredDevices.put(addr, device);
-                Log.i(TAG, "Discovered QuickChat Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
+                Log.i(TAG, "Discovered Node over BLE: " + addr + " (RSSI: " + result.getRssi() + ")");
 
                 String displayName = "Nearby Phone (" + addr.substring(Math.max(0, addr.length() - 5)) + ")";
                 if (record != null && record.getDeviceName() != null) {
@@ -423,7 +448,7 @@ public class NativeBleMeshPlugin extends Plugin {
                     connectedGattClients.put(device.getAddress(), gatt);
                     Log.i(TAG, "Connected to Peer GATT: " + device.getAddress());
                     if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                        gatt.discoverServices();
+                        gatt.requestMtu(512);
                     }
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     connectedGattClients.remove(device.getAddress());
@@ -433,10 +458,48 @@ public class NativeBleMeshPlugin extends Plugin {
             }
 
             @Override
+            public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+                super.onMtuChanged(gatt, mtu, status);
+                Log.i(TAG, "MTU changed to " + mtu + " for " + gatt.getDevice().getAddress());
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    gatt.discoverServices();
+                }
+            }
+
+            @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.i(TAG, "Discovered services on peer: " + gatt.getDevice().getAddress());
+                    if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                        BluetoothGattService service = gatt.getService(SERVICE_UUID);
+                        if (service != null) {
+                            BluetoothGattCharacteristic txChar = service.getCharacteristic(TX_CHAR_UUID);
+                            if (txChar != null) {
+                                gatt.setCharacteristicNotification(txChar, true);
+                                BluetoothGattDescriptor desc = txChar.getDescriptor(CCCD_UUID);
+                                if (desc != null) {
+                                    desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                    gatt.writeDescriptor(desc);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+                super.onCharacteristicChanged(gatt, characteristic);
+                byte[] value = characteristic.getValue();
+                if (value != null && value.length > 0) {
+                    String rawStr = new String(value, StandardCharsets.UTF_8);
+                    mainHandler.post(() -> {
+                        JSObject eventData = new JSObject();
+                        eventData.put("rawPacket", rawStr);
+                        eventData.put("senderHardwareId", gatt.getDevice().getAddress());
+                        notifyListeners("onPacketReceived", eventData);
+                    });
                 }
             }
         });
