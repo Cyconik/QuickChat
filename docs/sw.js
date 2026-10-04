@@ -1,16 +1,22 @@
-const CACHE_NAME = 'quickchat-offline-v1';
+const CACHE_NAME = 'quickchat-offline-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './app_icon.png',
-  './manifest.json'
+  './manifest.json',
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js'
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+      return cache.addAll(ASSETS_TO_CACHE).catch(err => {
+        console.warn('[SW] Non-critical cache item skipped:', err);
+        return cache.addAll(['./', './index.html', './app_icon.png', './manifest.json']);
+      });
+    })
   );
 });
 
@@ -29,14 +35,33 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // Only handle GET requests
+  if (e.request.method !== 'GET') return;
+
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
+        // Return cached and fetch in background to update
+        fetch(e.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(e.request, networkResponse);
+            });
+          }
+        }).catch(() => {});
         return cachedResponse;
       }
-      return fetch(e.request).catch(() => {
-        // Offline fallback to index.html
-        return caches.match('./index.html');
+      return fetch(e.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && e.request.url.startsWith('http')) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseClone);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Offline fallback to cached index.html
+        return caches.match('./index.html') || caches.match('./');
       });
     })
   );

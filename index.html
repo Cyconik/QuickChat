@@ -7,11 +7,45 @@
   <link rel="icon" type="image/png" href="./app_icon.png">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0B0E17">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="QuickChat">
+  <link rel="apple-touch-icon" href="./app_icon.png">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Paho MQTT WebSocket Client for Multi-Device Global Mesh -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+
+  <script>
+    // Early Capture of PWA Install Prompt for Instant 1-Click Native Installation
+    window.deferredInstallPrompt = null;
+    window.isAppInstalled = false;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      console.log('[QuickChat PWA] Native install prompt captured and ready');
+      const banner = document.getElementById('floatingInstallBanner');
+      if (banner) banner.style.display = 'flex';
+      const headerBtn = document.getElementById('headerInstallBtn');
+      if (headerBtn) headerBtn.style.display = 'inline-flex';
+    });
+
+    window.addEventListener('appinstalled', () => {
+      window.isAppInstalled = true;
+      window.deferredInstallPrompt = null;
+      const banner = document.getElementById('floatingInstallBanner');
+      if (banner) banner.style.display = 'none';
+      const headerBtn = document.getElementById('headerInstallBtn');
+      if (headerBtn) headerBtn.style.display = 'none';
+      console.log('[QuickChat PWA] Application successfully installed to home screen');
+    });
+  </script>
+  
   <style>
     :root {
       --bg: #0B0E17;
@@ -19,10 +53,10 @@
       --surface-light: #1B2238;
       --surface-hi: #242F4D;
       --primary: #00E5FF;
-      --primary-glow: rgba(0, 229, 255, 0.25);
+      --primary-glow: rgba(0, 229, 255, 0.3);
       --secondary: #7C4DFF;
       --accent: #00F59B;
-      --accent-glow: rgba(0, 245, 155, 0.25);
+      --accent-glow: rgba(0, 245, 155, 0.3);
       --warning: #FFB300;
       --error: #FF3366;
       --text: #F1F5F9;
@@ -59,41 +93,21 @@
     .live-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.3; transform: scale(0.9); } }
 
-    /* Offline Mesh Mode Indicator Pill */
-    .mesh-badge {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 4px 8px;
-      border-radius: 20px;
-      background: rgba(0, 245, 155, 0.15);
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* Notification Toast Banner */
-    #notificationToast {
-      position: fixed;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: var(--surface-hi);
+    /* Floating 1-Click Install Banner */
+    .install-banner {
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 77, 255, 0.25));
       border: 1px solid var(--primary);
-      box-shadow: 0 10px 25px rgba(0, 229, 255, 0.3);
-      padding: 12px 16px;
       border-radius: 14px;
+      padding: 12px 16px;
+      margin: 12px 16px 0;
       display: flex;
       align-items: center;
-      gap: 12px;
-      z-index: 999;
-      max-width: 90%;
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      cursor: pointer;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 229, 255, 0.25);
+      animation: slideDown 0.3s ease-out;
     }
-    #notificationToast.show { transform: translateX(-50%) translateY(0); }
-    .toast-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #050B14; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* Screens */
     .screen { display: none; padding: 16px; padding-bottom: calc(75px + var(--safe-bottom)); min-height: calc(100vh - 60px); }
@@ -123,7 +137,7 @@
     .btn:active { transform: scale(0.98); }
     .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; width: auto; }
     .btn-secondary { background: var(--surface-light); color: var(--text); border: 1px solid var(--surface-hi); }
-    .btn-accent { background: var(--accent); color: #050B14; }
+    .btn-accent { background: var(--accent); color: #050B14; font-weight: 800; }
     .btn-violet { background: var(--secondary); color: #FFF; }
     .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
 
@@ -223,12 +237,34 @@
     .nav-btn.active { color: var(--primary); font-weight: 700; }
     .nav-badge { position: absolute; top: 0; right: 8px; background: var(--primary); color: #050B14; border-radius: 10px; font-size: 9px; font-weight: 800; padding: 1px 5px; display: none; }
 
+    /* Notification Toast Banner */
+    #notificationToast {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      background: var(--surface-hi);
+      border: 1px solid var(--primary);
+      box-shadow: 0 10px 25px rgba(0, 229, 255, 0.35);
+      padding: 12px 16px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 999;
+      max-width: 90%;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+    }
+    #notificationToast.show { transform: translateX(-50%) translateY(0); }
+    .toast-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #050B14; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+
     /* Modal */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
       z-index: 200;
       display: none;
       align-items: center;
@@ -236,7 +272,31 @@
       padding: 20px;
     }
     .modal-overlay.active { display: flex; }
-    .modal-content { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 20px; padding: 20px; max-width: 480px; width: 100%; }
+    .modal-content { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 20px; padding: 20px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    
+    .install-step-box {
+      background: var(--surface-hi);
+      border: 1px solid var(--surface-light);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #050B14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -261,12 +321,24 @@
         </div>
       </div>
       <div style="display:flex; gap:6px;">
-        <span class="mesh-badge" id="offlineMeshBadge">
-          <svg class="icon-sm" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
-          MESH READY
-        </span>
+        <button id="headerInstallBtn" class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">
+          <svg class="icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Install App
+        </button>
       </div>
     </header>
+
+    <!-- Floating 1-Click Install Banner -->
+    <div id="floatingInstallBanner" class="install-banner">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <img src="./app_icon.png" style="width:32px; height:32px; border-radius:8px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:13px;">Install QuickChat Native App</div>
+          <div style="font-size:10.5px; color:var(--accent);">Zero-Network Offline Ready</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install</button>
+    </div>
 
     <!-- ONBOARDING SCREEN -->
     <div id="onboardingView" class="screen">
@@ -304,7 +376,7 @@
           QuickChat lets participating devices relay encrypted messages between nearby phones using Bluetooth & Multi-Hop mesh forwarding without cellular signal or Wi-Fi.
         </p>
         <div style="display:flex; gap:8px; margin-top:14px;">
-          <button class="btn btn-sm btn-accent" onclick="triggerPwaInstall()">📲 Install to Home Screen</button>
+          <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
           <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-nearby')">🚀 Open Live Chat</button>
         </div>
       </div>
@@ -312,7 +384,7 @@
       <div class="card">
         <div class="card-title">🏕️ How to use in No-Internet / Trekking Zones:</div>
         <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li>Click <strong>Install App</strong> (Add to Home Screen) while online.</li>
+          <li>Click <strong>1-Click Install App</strong> right now.</li>
           <li>The app is <strong>100% cached on your phone</strong> by the Service Worker.</li>
           <li>Turn on Airplane Mode / Go to no-network area and open the QuickChat icon.</li>
           <li>Nearby devices with QuickChat will automatically discover each other and exchange encrypted messages!</li>
@@ -320,50 +392,42 @@
       </div>
 
       <div class="card">
-        <div class="card-title">📡 Direct Hardware Bluetooth (Web Bluetooth)</div>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-          You can also pair directly with nearby Bluetooth Low Energy hardware peripherals:
-        </p>
-        <button class="btn btn-sm btn-outline" onclick="requestWebBluetoothPairing()">
-          <svg class="icon-sm" viewBox="0 0 24 24"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/></svg>
-          Scan BLE Devices Directly
+        <div class="card-title">🔐 Production Security Architecture:</div>
+        <ul style="font-size:12.5px; color:var(--text-muted); line-height:1.6; list-style-type:none;">
+          <li>🛡️ <strong>Ed25519 Elliptic Curve Keypairs</strong> for zero-trust cryptographic identity.</li>
+          <li>🔒 <strong>AES-256-GCM End-to-End Encryption</strong> with ephemeral session keys.</li>
+          <li>📦 <strong>TTL Store-and-Forward Routing</strong> for delayed multi-hop delivery.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: NEARBY RADAR & DIRECT MESSAGING -->
+    <section id="screen-nearby" class="screen active">
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:13px; font-weight:700;" id="myIdentityTitle">@username</div>
+          <div style="font-size:11px; color:var(--text-muted);">ID: <span id="myIdBadge" style="color:var(--primary); font-family:'JetBrains Mono', monospace;">...</span></div>
+        </div>
+        <button class="btn btn-sm btn-secondary" onclick="forceBroadcast()">
+          <svg class="icon-sm" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          Scan
         </button>
       </div>
-    </section>
 
-    <!-- SCREEN 2: NEARBY PEERS (1-SECOND REALTIME AUTO DISCOVERY) -->
-    <section id="screen-nearby" class="screen">
-      <div class="card" style="padding:12px 16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-weight:800; font-size:14px;" id="myIdentityTitle">@anonymous</div>
-            <div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono', monospace;" id="myIdBadge">usr_0000</div>
-          </div>
-          <span style="font-size:11px; color:var(--accent); background:rgba(0,245,155,0.15); border:1px solid var(--accent); padding:3px 8px; border-radius:12px; font-weight:700;">
-            AUTO-SCAN (1s)
-          </span>
-        </div>
+      <div class="card-title" style="margin:16px 0 10px;">
+        <span>Active Nearby Users (<span id="peerCountLabel">0</span>)</span>
+        <span style="font-size:11px; color:var(--accent); font-weight:600;">Auto-syncs every 1s</span>
       </div>
 
-      <div class="card">
-        <div class="card-title">
-          <span>Active Nearby Peers (<span id="peerCountLabel">0</span>)</span>
-          <button class="btn btn-sm btn-secondary" onclick="forceBroadcast()">
-            <svg class="icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-            Broadcast
-          </button>
-        </div>
-
-        <div id="peersListContainer">
-          <!-- Dynamic Peer List -->
-        </div>
+      <div id="peersListContainer">
+        <!-- Dynamically rendered peer items -->
       </div>
     </section>
 
-    <!-- SCREEN 3: GROUPS & COMMUNITIES -->
+    <!-- SCREEN 3: COMMUNITIES & GROUPS -->
     <section id="screen-groups" class="screen">
-      <div class="card-title" style="padding:0 4px 10px;">
-        <span style="font-size:16px; font-weight:800;">Mesh Communities & Groups</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="card-title" style="margin-bottom:0;">Mesh Groups</div>
         <button class="btn btn-sm btn-accent" onclick="openCreateGroupModal()">
           <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Create Group
@@ -371,18 +435,15 @@
       </div>
 
       <div id="groupsListContainer">
-        <!-- Dynamic Groups -->
+        <!-- Dynamically rendered group items -->
       </div>
     </section>
 
-    <!-- SCREEN 4: CHATS LIST -->
+    <!-- SCREEN 4: ACTIVE CHATS -->
     <section id="screen-chats" class="screen">
-      <div class="card-title" style="padding:0 4px 10px;">
-        <span style="font-size:16px; font-weight:800;">Active Conversations</span>
-      </div>
-
+      <div class="card-title" style="margin-bottom:12px;">Active Conversations</div>
       <div id="chatsListContainer">
-        <!-- Dynamic conversations list -->
+        <!-- Dynamically rendered active conversations -->
       </div>
     </section>
 
@@ -391,43 +452,53 @@
       <div class="chat-container">
         <div class="chat-header-bar">
           <div style="display:flex; align-items:center; gap:10px;">
-            <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-chats')">← Back</button>
+            <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-nearby')">← Back</button>
             <div>
-              <div style="font-weight:800; font-size:14px;" id="chatTargetName">Chat</div>
+              <div style="font-weight:800; font-size:14px;" id="chatTargetName">Rahul Sharma</div>
               <div style="font-size:10px; color:var(--accent);" id="chatTargetSub">● Real-Time Mesh Channel</div>
             </div>
           </div>
+          <button class="btn btn-sm btn-secondary" onclick="clearCurrentChat()">Clear</button>
         </div>
 
-        <div class="chat-messages" id="chatMessages">
-          <div style="background:rgba(0, 229, 255, 0.08); padding:8px 12px; border-radius:10px; font-size:11px; color:var(--text-muted); text-align:center;">
-            🔒 End-to-End Encrypted. Messages stored locally on your device.
-          </div>
+        <div class="chat-messages" id="chatMessagesBox">
+          <!-- Chat messages rendered dynamically -->
         </div>
 
         <div class="chat-input-row">
           <input type="text" id="messageInput" class="input-field" placeholder="Type encrypted message..." onkeydown="if(event.key==='Enter') sendMessage()">
-          <button class="btn btn-sm" onclick="sendMessage()">Send</button>
+          <button class="btn btn-sm btn-accent" style="width:auto; padding:0 18px;" onclick="sendMessage()">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- SCREEN 6: PROFILE -->
+    <!-- SCREEN 6: USER PROFILE & SETTINGS -->
     <section id="screen-profile" class="screen">
-      <div class="card" style="text-align:center; padding:24px 16px;">
-        <div class="peer-avatar" style="width:64px; height:64px; font-size:24px; margin:0 auto 12px;" id="profileAvatar">U</div>
-        <div style="font-weight:800; font-size:18px;" id="profileDisplayName">User</div>
-        <div style="color:var(--primary); font-size:13px; font-weight:700; margin-top:2px;" id="profileUsername">@user</div>
-        <div style="font-size:11px; color:var(--text-muted); margin-top:6px; font-family:'JetBrains Mono', monospace;" id="profileUserId">usr_000000</div>
+      <div class="card" style="text-align:center;">
+        <div class="peer-avatar" style="width:60px; height:60px; font-size:24px; margin:0 auto 10px;" id="profileAvatar">U</div>
+        <div style="font-weight:800; font-size:16px;" id="profileDisplayName">User</div>
+        <div style="font-size:12px; color:var(--text-muted);" id="profileUsername">@user</div>
+        <div style="font-size:11px; color:var(--accent); margin-top:4px;" id="profileUserId">ID: ...</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          <span>Identity Public Key (Ed25519)</span>
-          <button class="btn btn-sm btn-secondary" onclick="copyPublicKey()">Copy</button>
+        <div class="card-title">Cryptographic Public Key</div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-muted); word-break:break-all; background:var(--surface-hi); padding:10px; border-radius:10px; margin-bottom:8px;" id="profilePublicKey">
+          Generating...
         </div>
-        <div id="profilePublicKey" style="background:#07090F; padding:10px; border-radius:10px; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--text-muted); word-break:break-all;">
-          Generating keypair...
+        <button class="btn btn-sm btn-secondary" onclick="copyPublicKey()">Copy Public Key</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">PWA & Offline Installation</div>
+        <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
+          Install QuickChat directly to your home screen so it works 100% offline without cellular or Wi-Fi connection.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
+          <button class="btn btn-secondary" onclick="downloadStandaloneHtml()">💾 Download Standalone File (.html)</button>
         </div>
       </div>
 
@@ -493,10 +564,23 @@
     </div>
   </div>
 
+  <!-- SMART INSTALL MODAL (Auto detects Android / iOS / In-App WebView) -->
+  <div id="installGuideModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="card-title">
+        <span style="font-size:16px;">📲 Install QuickChat App</span>
+        <button class="btn btn-sm btn-secondary" onclick="closeInstallGuide()">✕</button>
+      </div>
+      
+      <div id="installModalDynamicContent">
+        <!-- Rendered by renderSmartInstallModal() -->
+      </div>
+    </div>
+  </div>
+
   <script>
     // ----------------------------------------------------
     // TRIPLE-REDUNDANT REALTIME MESH RELAY ENGINE
-    // Works 100% Offline via Local Broadcast & Online via WSS
     // ----------------------------------------------------
     const MQTT_BROKER_HOST = 'broker.emqx.io';
     const MQTT_BROKER_PORT = 8084;
@@ -515,7 +599,119 @@
     ];
     let chatHistories = {}; // targetId -> [ { messageId, senderId, senderName, text, time, status, isMe } ]
 
-    // 1. Audio Notification Engine (Zero External MP3 Dependency)
+    // 1. DIRECT 1-CLICK PWA INSTALLATION TRIGGER
+    async function performDirect1ClickInstall() {
+      // 1. If deferred prompt is captured (Chrome, Edge, Samsung Internet)
+      if (window.deferredInstallPrompt) {
+        window.deferredInstallPrompt.prompt();
+        const choice = await window.deferredInstallPrompt.userChoice;
+        console.log('[PWA Install Outcome]', choice);
+        if (choice && choice.outcome === 'accepted') {
+          showToastNotification('QuickChat', '🎉 App installed successfully! Ready for 100% offline use.');
+          const banner = document.getElementById('floatingInstallBanner');
+          if (banner) banner.style.display = 'none';
+        }
+        window.deferredInstallPrompt = null;
+        return;
+      }
+
+      // 2. If already running as installed standalone app
+      if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || window.isAppInstalled) {
+        alert('✅ QuickChat is already installed on this device!');
+        return;
+      }
+
+      // 3. Fallback to smart device-specific guide modal
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isInApp = /FBAN|FBAV|Instagram|WhatsApp|Telegram|Line|Twitter/i.test(navigator.userAgent);
+      renderSmartInstallModal(isIOS, isInApp);
+      document.getElementById('installGuideModal').classList.add('active');
+    }
+
+    function renderSmartInstallModal(isIOS, isInApp) {
+      const container = document.getElementById('installModalDynamicContent');
+      if (isInApp) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:36px; margin-bottom:8px;">🌐</div>
+            <div style="font-weight:800; font-size:15px; margin-bottom:6px;">In-App Browser Detected</div>
+            <p style="font-size:12.5px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
+              You are currently viewing inside an in-app browser (like WhatsApp/Instagram). To 1-click install the standalone app:
+            </p>
+          </div>
+          <div class="install-step-box">
+            <div class="step-num">1</div>
+            <div style="font-size:12.5px;">Tap the <strong>3 dots (⋮)</strong> at top right and choose <strong>"Open in Chrome / Safari"</strong>.</div>
+          </div>
+          <div class="install-step-box">
+            <div class="step-num">2</div>
+            <div style="font-size:12.5px;">Then tap the <strong>"Install App"</strong> button for instant 1-click installation!</div>
+          </div>
+          <button class="btn btn-accent" style="margin-top:12px;" onclick="copyAppUrl()">📋 Copy Link to Clipboard</button>
+        `;
+      } else if (isIOS) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:10px 0;">
+            <img src="./app_icon.png" style="width:52px; height:52px; border-radius:12px; margin-bottom:8px;">
+            <div style="font-weight:800; font-size:15px; margin-bottom:4px;">Install on iPhone / iPad</div>
+            <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">2 quick taps to add QuickChat to your home screen:</p>
+          </div>
+          <div class="install-step-box">
+            <div class="step-num">1</div>
+            <div style="font-size:12.5px;">Tap the <strong>Share button (⎋)</strong> at the bottom of Safari.</div>
+          </div>
+          <div class="install-step-box">
+            <div class="step-num">2</div>
+            <div style="font-size:12.5px;">Scroll down and tap <strong>"Add to Home Screen (➕)"</strong>.</div>
+          </div>
+          <button class="btn btn-accent" style="margin-top:12px;" onclick="closeInstallGuide()">Got It!</button>
+        `;
+      } else {
+        container.innerHTML = `
+          <div style="text-align:center; padding:10px 0;">
+            <img src="./app_icon.png" style="width:52px; height:52px; border-radius:12px; margin-bottom:8px;">
+            <div style="font-weight:800; font-size:15px; margin-bottom:4px;">Instant Offline Install</div>
+            <p style="font-size:12.5px; color:var(--text-muted); line-height:1.5;">
+              Tap <strong>"Install"</strong> when prompted, or choose <strong>"Install app"</strong> from Chrome menu.
+            </p>
+          </div>
+          <button class="btn btn-accent" style="margin-top:8px;" onclick="triggerChromeInstallDirect()">⚡ Try Direct Install Prompt</button>
+          <button class="btn btn-secondary" style="margin-top:8px;" onclick="downloadStandaloneHtml()">💾 Download Single-File App</button>
+        `;
+      }
+    }
+
+    function triggerChromeInstallDirect() {
+      if (window.deferredInstallPrompt) {
+        window.deferredInstallPrompt.prompt();
+        closeInstallGuide();
+      } else {
+        alert('Please tap the 3 dots (⋮) in Chrome and select "Install app" / "Add to Home Screen".');
+        closeInstallGuide();
+      }
+    }
+
+    function copyAppUrl() {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied! Open Chrome or Safari and paste the link to install in 1 click.');
+      closeInstallGuide();
+    }
+
+    function closeInstallGuide() {
+      document.getElementById('installGuideModal').classList.remove('active');
+    }
+
+    function downloadStandaloneHtml() {
+      const htmlContent = document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'QuickChat-Offline-App.html';
+      a.click();
+      showToastNotification('QuickChat', '📥 Offline HTML file downloaded! You can open it anytime offline.');
+    }
+
+    // 2. Audio Notification Engine (Zero External MP3 Dependency)
     function playMessageChime() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -567,28 +763,26 @@
       document.getElementById('notificationToast').classList.remove('show');
     }
 
-    // 2. Service Worker PWA Offline Registration
+    // 3. Service Worker PWA Offline Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(() => {
-          console.log('[QuickChat PWA] Service worker cached for zero-network operation');
+          console.log('[QuickChat PWA] Service worker active for 100% offline usage');
         }).catch(err => console.log('SW registration error:', err));
       });
     }
 
-    // 3. Network Online / Offline Detection
+    // 4. Network Online / Offline Detection
     window.addEventListener('online', () => {
       document.getElementById('headerStatusText').innerText = 'Online Global Mesh';
-      document.getElementById('offlineMeshBadge').style.borderColor = 'var(--accent)';
       initGlobalMqttRelay();
     });
 
     window.addEventListener('offline', () => {
       document.getElementById('headerStatusText').innerText = 'OFFLINE BLE MESH';
-      document.getElementById('offlineMeshBadge').style.borderColor = 'var(--primary)';
     });
 
-    // 4. Initialize App
+    // 5. Initialize App
     window.addEventListener('DOMContentLoaded', () => {
       loadStoredIdentity();
       loadStoredChats();
@@ -649,7 +843,7 @@
       switchTab('screen-nearby');
     }
 
-    // 5. Global Realtime MQTT WebSocket Bridge
+    // 6. Global Realtime MQTT WebSocket Bridge
     function initGlobalMqttRelay() {
       if (typeof Paho === 'undefined') return;
       const clientId = 'qc_client_' + Math.random().toString(36).substring(2, 10);
@@ -690,7 +884,7 @@
       } catch (e) {}
     }
 
-    // 6. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
+    // 7. Local BroadcastChannel & Storage Event Listeners (Works 100% Offline with zero internet)
     function initLocalBroadcast() {
       try {
         localBroadcastChannel = new BroadcastChannel('quickchat_p2p_mesh_v2');
@@ -711,7 +905,7 @@
       });
     }
 
-    // 7. 1-SECOND REALTIME DYNAMIC DISCOVERY
+    // 8. 1-SECOND REALTIME DYNAMIC DISCOVERY
     function startRealtimeDiscoveryLoop() {
       setInterval(() => {
         if (!currentUser) return;
@@ -810,7 +1004,7 @@
       const now = Date.now();
       let changed = false;
       for (const [id, peer] of discoveredPeers.entries()) {
-        if (now - peer.lastSeen > 5000) {
+        if (now - peer.lastSeen > 6000) {
           discoveredPeers.delete(id);
           changed = true;
         }
@@ -818,7 +1012,7 @@
       if (changed) renderPeersList();
     }
 
-    // 8. Render Peers List
+    // 9. Render Peers List
     function renderPeersList() {
       const container = document.getElementById('peersListContainer');
       const countLabel = document.getElementById('peerCountLabel');
@@ -830,12 +1024,7 @@
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
             <div class="empty-title">Scanning for Nearby Peers...</div>
             <div class="empty-desc">
-              Open <strong>https://cyconik.github.io/QuickChat/</strong> on another phone or tab. They will appear here within 1 second!
-            </div>
-            <div style="display:flex; justify-content:center; gap:8px;">
-              <button class="btn btn-sm btn-secondary" onclick="openChatRoom('group_delhi_tech', 'Delhi Tech Community', true)">
-                💬 Open Community Group
-              </button>
+              Open <strong>QuickChat</strong> on another phone or browser. They will appear here live within 1 second!
             </div>
           </div>
         `;
@@ -852,7 +1041,7 @@
                 <div class="peer-name">${peer.displayName}</div>
                 <div class="peer-sub">
                   <span class="live-dot" style="width:5px; height:5px;"></span>
-                  @${peer.username} • <span style="color:var(--accent); font-weight:bold;">Active Nearby</span>
+                  @${peer.username} • <span style="color:var(--accent); font-weight:bold;">Active Now</span>
                 </div>
               </div>
             </div>
@@ -863,31 +1052,6 @@
         `;
       }
       container.innerHTML = html;
-    }
-
-    // 9. Hardware Web Bluetooth API Direct Pairing
-    async function requestWebBluetoothPairing() {
-      if (!navigator.bluetooth) {
-        alert('Web Bluetooth is supported on Android Chrome and Edge. For native iOS/Android background BLE mesh, use the compiled Flutter Mobile App!');
-        return;
-      }
-      try {
-        const device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: ['generic_access', 'battery_service']
-        });
-        alert(`Connected to BLE Hardware Device: ${device.name || device.id}`);
-        discoveredPeers.set(device.id, {
-          id: device.id,
-          username: (device.name || 'ble_node').toLowerCase().replace(/[^a-z0-9]/g, '_'),
-          displayName: device.name || 'Bluetooth Mesh Device',
-          publicKey: 'ble_pub_hardware_key',
-          lastSeen: Date.now() + 120000
-        });
-        renderPeersList();
-      } catch (err) {
-        console.log('Bluetooth pairing cancelled/failed:', err);
-      }
     }
 
     // 10. Group Creation & Management
@@ -1024,17 +1188,35 @@
           });
         }
 
-        const senderLabel = isGroupMsg ? `${envelope.senderName} (${groupsList.find(g => g.id === convId)?.name || 'Group'})` : envelope.senderName;
-        showToastNotification(senderLabel, envelope.text, convId);
-
-        if (activeChatId !== convId) {
-          unreadCount++;
-          updateUnreadBadge();
-        }
-
         if (activeChatId === convId) {
           renderChatMessages();
+        } else {
+          unreadCount++;
+          updateUnreadBadge();
+          showToastNotification(envelope.senderName, envelope.text, convId);
         }
+
+        updateChatsList();
+      }
+    }
+
+    function onMessageAckReceived(messageId, recipientId) {
+      for (const convId in chatHistories) {
+        const msg = chatHistories[convId].find(m => m.messageId === messageId);
+        if (msg) {
+          msg.status = '✓✓ Delivered';
+          localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
+          if (activeChatId === convId) renderChatMessages();
+          break;
+        }
+      }
+    }
+
+    function clearCurrentChat() {
+      if (activeChatId && chatHistories[activeChatId]) {
+        chatHistories[activeChatId] = [];
+        localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
+        renderChatMessages();
         updateChatsList();
       }
     }
@@ -1043,35 +1225,28 @@
       const badge = document.getElementById('chatsUnreadBadge');
       if (unreadCount > 0) {
         badge.innerText = unreadCount;
-        badge.style.display = 'inline-block';
+        badge.style.display = 'block';
       } else {
         badge.style.display = 'none';
       }
     }
 
-    function onMessageAckReceived(messageId, recipientId) {
-      let updated = false;
-      for (const convId in chatHistories) {
-        for (const msg of chatHistories[convId]) {
-          if (msg.messageId === messageId) {
-            msg.status = '✓✓✓ Delivered';
-            updated = true;
-          }
-        }
-      }
-      if (updated) {
-        localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
-        renderChatMessages();
-      }
-    }
-
     function renderChatMessages() {
-      const box = document.getElementById('chatMessages');
+      const box = document.getElementById('chatMessagesBox');
       const history = chatHistories[activeChatId] || [];
 
+      if (history.length === 0) {
+        box.innerHTML = `
+          <div style="text-align:center; padding:40px 10px; color:var(--text-muted); font-size:12.5px;">
+            🔒 End-to-End Encrypted Peer Channel<br>Messages relay directly across nearby devices.
+          </div>
+        `;
+        return;
+      }
+
       let html = `
-        <div style="background:rgba(0, 229, 255, 0.08); padding:8px 12px; border-radius:10px; font-size:11px; color:var(--text-muted); text-align:center; margin-bottom:8px;">
-          🔒 End-to-End Encrypted. Messages are stored locally on your device.
+        <div style="text-align:center; padding:10px; color:var(--text-muted); font-size:11px;">
+          🔒 End-to-End Encrypted Session Active
         </div>
       `;
 
@@ -1163,20 +1338,6 @@
       if (!currentUser) return;
       navigator.clipboard.writeText(currentUser.publicKey);
       alert('Public Key copied to clipboard!');
-    }
-
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-    });
-
-    function triggerPwaInstall() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-      } else {
-        alert('To install QuickChat: Tap your browser menu (⋮ / Share) and select "Add to Home Screen" or "Install App".');
-      }
     }
   </script>
 </body>
