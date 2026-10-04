@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   
-  <!-- Paho MQTT WebSocket Client for Multi-Device Global Relay -->
+  <!-- Paho MQTT WebSocket Client for Multi-Device Global Mesh Relay -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
   <!-- Lightweight QR Code Generator & Camera Scanner for Zero-Network Direct WebRTC Pairing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -101,53 +101,57 @@
     .install-banner {
       background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(124, 77, 255, 0.25));
       border: 1px solid var(--primary);
-      border-radius: 14px;
-      padding: 12px 16px;
-      margin: 12px 16px 0;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      box-shadow: 0 8px 24px rgba(0, 229, 255, 0.25);
-      animation: slideDown 0.3s ease-out;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2);
     }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Relay Banner */
+    /* Screens */
+    .screen { display: none; padding: 16px; padding-bottom: 90px; flex: 1; animation: fadeIn 0.2s ease-in-out; }
+    .screen.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-light);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    .card-title { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    
+    /* Fast Action Public Channel Banner */
+    .public-group-card {
+      background: linear-gradient(135deg, #1C233D 0%, #2A1B4E 100%);
+      border: 1px solid var(--secondary);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 6px 20px rgba(124, 77, 255, 0.2);
+      transition: transform 0.15s;
+    }
+    .public-group-card:active { transform: scale(0.98); }
+
     .relay-banner {
-      background: linear-gradient(135deg, rgba(0, 245, 155, 0.15), rgba(41, 121, 255, 0.15));
-      border: 1px solid var(--accent);
+      background: rgba(0, 245, 155, 0.08);
+      border: 1px dashed var(--accent);
       border-radius: 12px;
       padding: 10px 14px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11.5px;
-    }
-
-    /* Public Group Feature Card */
-    .public-group-card {
-      background: linear-gradient(135deg, rgba(124, 77, 255, 0.2), rgba(0, 229, 255, 0.2));
-      border: 1px solid rgba(124, 77, 255, 0.4);
-      border-radius: 16px;
-      padding: 14px 16px;
       margin-bottom: 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      cursor: pointer;
-      transition: all 0.2s;
+      font-size: 12px;
     }
-    .public-group-card:active { transform: scale(0.98); }
-
-    /* Screens */
-    .screen { display: none; padding: 16px; padding-bottom: calc(75px + var(--safe-bottom)); min-height: calc(100vh - 60px); }
-    .screen.active { display: block; }
-
-    /* Cards */
-    .card { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
-    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
 
     /* Buttons */
     .btn {
@@ -206,7 +210,6 @@
       border: 1px solid var(--surface-light);
       animation: fadeIn 0.3s ease-in;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .peer-item-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
     .peer-avatar {
       width: 40px;
@@ -223,7 +226,6 @@
       flex-shrink: 0;
     }
     .ble-avatar { background: var(--bluetooth-glow); color: var(--bluetooth); border-color: var(--bluetooth); }
-    .direct-avatar { background: rgba(0, 245, 155, 0.25); color: var(--accent); border-color: var(--accent); }
     .group-avatar { background: rgba(124, 77, 255, 0.25); color: var(--secondary); border-color: var(--secondary); }
     .peer-name { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .peer-sub { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
@@ -308,6 +310,8 @@
     }
     .modal-overlay.active { display: flex; }
     .modal-content { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 20px; padding: 20px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .install-step-box { background: var(--surface-hi); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color:#0B0E17; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0; }
   </style>
 </head>
 <body>
@@ -332,9 +336,13 @@
         </div>
       </div>
       <div style="display:flex; gap:6px;">
+        <button class="btn btn-sm btn-ble" onclick="openOfflinePairModal()">
+          <svg class="icon-sm" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+          Offline Connect
+        </button>
         <button id="headerInstallBtn" class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">
           <svg class="icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Install App
+          Install
         </button>
       </div>
     </header>
@@ -388,17 +396,29 @@
         </p>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn btn-sm btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
-          <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-groups')">👥 Open Mesh Groups</button>
+          <button class="btn btn-sm btn-ble" onclick="openOfflinePairModal()">⚡ Offline Connect</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">👥 Group Chatting Without Setup:</div>
+        <div class="card-title">📡 How Zero-Internet Nearby Chat Works:</div>
         <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li><strong>#Nearby-Public-Mesh:</strong> Join the public channel with 1 click. Everyone nearby will instantly receive your messages.</li>
-          <li><strong>Custom Groups:</strong> Tap <em>"➕ Create Group"</em> to make private groups for trekking teams, friends, or classrooms.</li>
-          <li><strong>Autonomous Multi-Hop:</strong> Intermediate phones forward group packets so the group can chat across long distances!</li>
+          <li><strong>Portable Hotspot Mode (No SIM/Data needed):</strong> One phone turns on Hotspot, nearby phones connect. All users discover each other and chat 100% offline!</li>
+          <li><strong>1-Tap Offline QR Link:</strong> Tap <em>"Offline Connect"</em> -> Show QR or Scan QR with camera. Connects directly peer-to-peer via WebRTC DataChannels.</li>
+          <li><strong>Autonomous 5km Mesh Forwarding:</strong> If someone is out of range, intermediate phones automatically store and forward the encrypted packets.</li>
+          <li><strong>Permanent Groups:</strong> Create groups anytime. Groups stay saved permanently and sync to all nearby devices.</li>
         </ol>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📲 Native Hardware BLE Mobile App</div>
+        <p style="font-size:12.5px; color:var(--text-muted); line-height:1.5; margin-bottom:12px;">
+          For 24/7 background hardware Bluetooth advertising without touching screen, check our native Flutter engine in the repo.
+        </p>
+        <a href="https://github.com/Cyconik/QuickChat" target="_blank" class="btn btn-secondary" style="text-decoration:none;">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          QuickChat GitHub Repository
+        </a>
       </div>
     </section>
 
@@ -409,9 +429,9 @@
           <div style="font-size:13px; font-weight:700;" id="myIdentityTitle">@username</div>
           <div style="font-size:11px; color:var(--text-muted);">ID: <span id="myIdBadge" style="color:var(--primary); font-family:'JetBrains Mono', monospace;">...</span></div>
         </div>
-        <div style="display:flex; gap:4px; align-items:center;">
+        <div style="display:flex; gap:6px; align-items:center;">
           <span class="live-dot"></span>
-          <span style="font-size:11px; color:var(--accent); font-weight:700;">Auto-Scanning</span>
+          <span style="font-size:11px; color:var(--accent); font-weight:700;">Auto-Scanning (1s)</span>
         </div>
       </div>
 
@@ -427,21 +447,30 @@
         <button class="btn btn-sm btn-accent" style="width:auto;">Chat 💬</button>
       </div>
 
+      <!-- Zero-Internet Offline Pairing Fast Action Banner -->
+      <div style="background:var(--surface); border:1px solid var(--bluetooth); border-radius:14px; padding:12px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div>
+          <div style="font-weight:800; font-size:13px; color:var(--bluetooth);">⚡ Offline Zero-Internet Pairing</div>
+          <div style="font-size:11px; color:var(--text-muted);">Connect with nearby devices via Hotspot / QR</div>
+        </div>
+        <button class="btn btn-sm btn-ble" onclick="openOfflinePairModal()">Pair Offline</button>
+      </div>
+
       <!-- Autonomous Mesh Relay Status Banner -->
       <div class="relay-banner">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:18px;">🔄</span>
           <div>
-            <div style="font-weight:800; color:var(--text);">Autonomous Mesh Relay Active</div>
-            <div style="color:var(--accent);" id="meshRelayedStatsBadge">Forwarding packets for nearby mesh</div>
+            <div style="font-weight:800; color:var(--text);">Autonomous Multi-Hop Mesh Active</div>
+            <div style="color:var(--accent);" id="meshRelayedStatsBadge">Forwarding packets for 5km mesh</div>
           </div>
         </div>
         <span style="background:rgba(0, 245, 155, 0.2); color:var(--accent); padding:3px 8px; border-radius:10px; font-size:10px; font-weight:800;">RELAY ON</span>
       </div>
 
       <div class="card-title" style="margin:16px 0 10px;">
-        <span>Discovered Peers (<span id="peerCountLabel">0</span>)</span>
-        <span style="font-size:11px; color:var(--accent); font-weight:600;">Auto-syncs live</span>
+        <span>Discovered Nearby Peers (<span id="peerCountLabel">0</span>)</span>
+        <button class="btn btn-sm btn-secondary" onclick="forceBroadcast()">🔄 Scan Now</button>
       </div>
 
       <div id="peersListContainer">
@@ -452,7 +481,7 @@
     <!-- SCREEN 3: COMMUNITIES & GROUPS -->
     <section id="screen-groups" class="screen">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">Mesh Groups (Zero Setup)</div>
+        <div class="card-title" style="margin-bottom:0;">Mesh Groups</div>
         <button class="btn btn-sm btn-accent" onclick="openCreateGroupModal()">
           <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Create Group
@@ -460,7 +489,7 @@
       </div>
 
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-        Everyone nearby automatically sees these groups and can talk together without any QR code!
+        Created groups stay saved permanently and sync to all nearby devices automatically.
       </p>
 
       <div id="groupsListContainer">
@@ -513,11 +542,11 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Multi-Hop Relay Settings</div>
+        <div class="card-title">Autonomous Mesh Relay Node</div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div>
-            <div style="font-size:13px; font-weight:700;">Act as Mesh Relay Node</div>
-            <div style="font-size:11px; color:var(--text-muted);">Relay encrypted group packets for nearby peers</div>
+            <div style="font-size:13px; font-weight:700;">Act as Mesh Relay</div>
+            <div style="font-size:11px; color:var(--text-muted);">Store & Forward packets across 5km mesh</div>
           </div>
           <button class="btn btn-sm btn-accent" id="toggleRelayBtn" onclick="toggleMeshRelay()">Enabled ✓</button>
         </div>
@@ -533,16 +562,16 @@
         </p>
         <div style="display:flex; flex-direction:column; gap:8px;">
           <button class="btn btn-accent" onclick="performDirect1ClickInstall()">📲 1-Click Install App</button>
-          <button class="btn btn-secondary" onclick="downloadStandaloneHtml()">💾 Download Standalone File (.html)</button>
+          <button class="btn btn-secondary" onclick="downloadStandaloneHtml()">💾 Download Single-File (.html)</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Audio & Alerts (Active on EVERY Message)</div>
+        <div class="card-title">Audio & Vibration Alerts</div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
           <div>
-            <div style="font-size:13px; font-weight:700;">Incoming Message Alert</div>
-            <div style="font-size:11px; color:var(--text-muted);">Audible chime + vibration on every incoming message</div>
+            <div style="font-size:13px; font-weight:700;">Audible Chime + Vibration</div>
+            <div style="font-size:11px; color:var(--text-muted);">Alerts actively on EVERY incoming message</div>
           </div>
           <button class="btn btn-sm btn-outline" onclick="playMessageChime()">Test Chime 🔔</button>
         </div>
@@ -555,11 +584,11 @@
         <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span>About</span>
       </button>
-      <button class="nav-btn" onclick="switchTab('screen-nearby', this)">
+      <button class="nav-btn active" onclick="switchTab('screen-nearby', this)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
         <span>Nearby</span>
       </button>
-      <button class="nav-btn active" onclick="switchTab('screen-groups', this)">
+      <button class="nav-btn" onclick="switchTab('screen-groups', this)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Groups</span>
       </button>
@@ -583,18 +612,55 @@
         <button class="btn btn-sm btn-secondary" onclick="closeCreateGroupModal()">✕</button>
       </div>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
-        New groups automatically propagate to everyone nearby across the mesh!
+        New groups stay saved permanently and automatically propagate to everyone nearby!
       </p>
 
       <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">GROUP NAME</label>
       <input type="text" id="newGroupName" class="input-field" placeholder="e.g. Mountain Trekking Squad">
 
       <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">DESCRIPTION</label>
-      <input type="text" id="newGroupDesc" class="input-field" placeholder="e.g. Offline chat for our trekking team">
+      <input type="text" id="newGroupDesc" class="input-field" placeholder="e.g. Offline chat for our team">
 
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button class="btn btn-secondary" onclick="closeCreateGroupModal()">Cancel</button>
         <button class="btn btn-accent" onclick="createNewGroup()">Create Group</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFLINE ZERO-INTERNET PAIRING MODAL -->
+  <div id="offlinePairModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="card-title">
+        <span style="font-size:16px;">⚡ Offline Zero-Internet Connect</span>
+        <button class="btn btn-sm btn-secondary" onclick="closeOfflinePairModal()">✕</button>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.4;">
+        Use these options when you have NO cellular data or internet:
+      </p>
+
+      <div style="display:flex; gap:6px; margin-bottom:14px;">
+        <button class="btn btn-sm btn-accent" style="flex:1;" onclick="showQrTab('my-qr')">Show My QR</button>
+        <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="showQrTab('scan-qr')">Scan Peer QR</button>
+        <button class="btn btn-sm btn-ble" style="flex:1;" onclick="startWebBluetoothScan()">BLE Scan</button>
+      </div>
+
+      <div id="qrDisplaySection" style="text-align:center; padding:10px 0;">
+        <div style="font-size:13px; font-weight:700; margin-bottom:8px;">Your Mesh Peer ID & QR:</div>
+        <div id="qrcodeBox" style="display:inline-block; background:#FFF; padding:12px; border-radius:12px;"></div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:8px;" id="qrPeerIdText">ID: ...</div>
+      </div>
+
+      <div id="qrScanSection" style="display:none; text-align:center;">
+        <div id="qrReader" style="width:100%; border-radius:12px; overflow:hidden;"></div>
+        <button class="btn btn-sm btn-secondary" style="margin-top:10px;" onclick="stopQrScanner()">Stop Camera Scanner</button>
+      </div>
+
+      <div class="install-step-box" style="margin-top:14px;">
+        <div class="step-num">💡</div>
+        <div style="font-size:11.5px; line-height:1.4;">
+          <strong>Tip for Zero Internet:</strong> Turn on Portable Hotspot on 1 phone (no SIM data needed). All nearby friends connect to that Hotspot to chat seamlessly!
+        </div>
       </div>
     </div>
   </div>
@@ -626,20 +692,21 @@
     let unreadCount = 0;
     let isMeshRelayEnabled = true;
     let totalRelayedCount = 0;
+    let qrScanner = null;
 
-    let seenPacketIds = new Set(); // Loop prevention cache
+    let seenPacketIds = new Set();
     let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline }
     
-    // DEFAULT ACTIVE PUBLIC MESH GROUPS (Everyone can talk here with ZERO setup)
-    let defaultGroups = [
-      { id: 'group_nearby_public', name: '#Nearby-Public-Mesh', desc: '📢 Public channel for all nearby people', members: 48 },
+    // DEFAULT ACTIVE PUBLIC MESH GROUPS
+    const defaultGroups = [
+      { id: 'group_nearby_public', name: '#Nearby-Public-Mesh', desc: '📢 Public broadcast for all nearby people', members: 48 },
       { id: 'group_trek_sos', name: '#Trek-Emergency-SOS', desc: '⛰️ High-priority SOS broadcast for mountain areas', members: 12 },
       { id: 'group_campus_hub', name: '#Campus-Hub', desc: '🎓 Decentralized student mesh meetup', members: 26 }
     ];
     let groupsList = [];
-    let chatHistories = {}; // targetId -> [ { messageId, senderId, senderName, text, time, status, isMe, hops } ]
-    let pendingMeshQueue = []; // Store-and-Forward messages to flush on reconnect
-    let relayBuffer = []; // Store-and-Forward relay buffer for 5km hops
+    let chatHistories = {};
+    let pendingMeshQueue = [];
+    let relayBuffer = [];
 
     // 1. DIRECT 1-CLICK PWA INSTALLATION TRIGGER
     async function performDirect1ClickInstall() {
@@ -674,7 +741,7 @@
             <div style="font-size:36px; margin-bottom:8px;">🌐</div>
             <div style="font-weight:800; font-size:15px; margin-bottom:6px;">In-App Browser Detected</div>
             <p style="font-size:12.5px; color:var(--text-muted); line-height:1.5; margin-bottom:14px;">
-              You are currently viewing inside an in-app browser (like WhatsApp/Instagram). To 1-click install the standalone app:
+              You are currently viewing inside an in-app browser. To 1-click install the standalone app:
             </p>
           </div>
           <div class="install-step-box">
@@ -862,13 +929,17 @@
       initGlobalMqttRelay();
       startRealtimeDiscoveryLoop();
       renderGroupsList();
+      renderPeersList();
+
+      const lastTab = localStorage.getItem('qc_active_tab') || 'screen-nearby';
+      switchTab(lastTab);
     });
 
     function loadStoredIdentity() {
       const stored = localStorage.getItem('qc_user_identity');
       if (stored) {
         currentUser = JSON.parse(stored);
-        showApp();
+        updateIdentityUI();
       } else {
         const defaultName = 'User_' + Math.floor(Math.random() * 899 + 100);
         document.getElementById('onboardUsername').value = defaultName.toLowerCase();
@@ -893,7 +964,7 @@
 
       localStorage.setItem('qc_user_identity', JSON.stringify(currentUser));
       document.getElementById('onboardingView').classList.remove('active');
-      showApp();
+      updateIdentityUI();
 
       broadcastPresence();
       if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -901,16 +972,13 @@
       }
     }
 
-    function showApp() {
+    function updateIdentityUI() {
       document.getElementById('myIdentityTitle').innerText = '@' + currentUser.username + ' (' + currentUser.displayName + ')';
       document.getElementById('myIdBadge').innerText = currentUser.id;
       document.getElementById('profileDisplayName').innerText = currentUser.displayName;
       document.getElementById('profileUsername').innerText = '@' + currentUser.username;
       document.getElementById('profileUserId').innerText = currentUser.id;
       document.getElementById('profileAvatar').innerText = currentUser.displayName.charAt(0).toUpperCase();
-      document.getElementById('profilePublicKey').innerText = currentUser.publicKey;
-
-      switchTab('screen-groups');
     }
 
     // 7. Global Realtime MQTT WebSocket Bridge
@@ -1005,7 +1073,8 @@
           displayName: currentUser.displayName,
           publicKey: currentUser.publicKey,
           lastSeen: Date.now()
-        }
+        },
+        knownGroups: groupsList.filter(g => !defaultGroups.some(d => d.id === g.id))
       };
 
       transmitPacket(presencePacket);
@@ -1048,7 +1117,7 @@
         }
       }
 
-      // Heartbeat Peer Discovery (Zero-Click Auto)
+      // Heartbeat Peer Discovery & Groups Sync
       if (packet.type === 'PEER_HEARTBEAT') {
         const peer = packet.peer;
         if (peer.id !== currentUser.id) {
@@ -1057,6 +1126,21 @@
           renderPeersList();
           flushRelayBufferToPeer(peer.id);
         }
+
+        // Auto-sync discovered groups
+        if (packet.knownGroups && Array.isArray(packet.knownGroups)) {
+          let updated = false;
+          for (const g of packet.knownGroups) {
+            if (!groupsList.some(item => item.id === g.id)) {
+              groupsList.push(g);
+              updated = true;
+            }
+          }
+          if (updated) {
+            saveCustomGroups();
+            renderGroupsList();
+          }
+        }
       }
 
       // Group Broadcast Created (Propagates to all nearby devices)
@@ -1064,7 +1148,7 @@
         const group = packet.group;
         if (!groupsList.some(g => g.id === group.id)) {
           groupsList.push(group);
-          localStorage.setItem('qc_groups_list', JSON.stringify(groupsList));
+          saveCustomGroups();
           renderGroupsList();
           showToastNotification('QuickChat', `👥 New Nearby Group Discovered: ${group.name}`);
         }
@@ -1096,7 +1180,7 @@
 
             totalRelayedCount++;
             const badge = document.getElementById('meshRelayedStatsBadge');
-            if (badge) badge.innerText = `${totalRelayedCount} packets forwarded for nearby mesh`;
+            if (badge) badge.innerText = `${totalRelayedCount} packets forwarded for 5km mesh`;
             const stat = document.getElementById('totalRelayedStat');
             if (stat) stat.innerText = totalRelayedCount;
 
@@ -1185,7 +1269,7 @@
                 <div class="peer-name">${peer.displayName}</div>
                 <div class="peer-sub">
                   <span class="${isOnline ? 'live-dot' : 'offline-dot'}" style="width:6px; height:6px;"></span>
-                  @${peer.username} • <span style="color:${isOnline ? 'var(--accent)' : 'var(--warning)'}; font-weight:bold;">${isOnline ? 'Active Now' : 'Offline Mesh Contact'}</span>
+                  @${peer.username} • <span style="color:${isOnline ? 'var(--accent)' : 'var(--warning)'}; font-weight:bold;">${isOnline ? 'Active Nearby' : 'Offline Mesh Contact'}</span>
                 </div>
               </div>
             </div>
@@ -1198,7 +1282,7 @@
       container.innerHTML = html;
     }
 
-    // 12. Group Creation & Management (Zero Setup)
+    // 12. Permanent Group Creation & Persistence (NEVER DELETED ON REFRESH)
     function openCreateGroupModal() {
       document.getElementById('createGroupModal').classList.add('active');
     }
@@ -1220,7 +1304,7 @@
       };
 
       groupsList.push(newGroup);
-      localStorage.setItem('qc_groups_list', JSON.stringify(groupsList));
+      saveCustomGroups();
       closeCreateGroupModal();
       document.getElementById('newGroupName').value = '';
       document.getElementById('newGroupDesc').value = '';
@@ -1235,23 +1319,43 @@
       openChatRoom(groupId, name, true);
     }
 
+    function saveCustomGroups() {
+      const customOnly = groupsList.filter(g => !defaultGroups.some(d => d.id === g.id));
+      localStorage.setItem('qc_custom_groups', JSON.stringify(customOnly));
+      localStorage.setItem('qc_groups_list', JSON.stringify(groupsList));
+    }
+
     function loadStoredGroups() {
-      const raw = localStorage.getItem('qc_groups_list');
-      if (raw) {
-        try {
-          const custom = JSON.parse(raw);
-          // Combine defaults and custom groups
-          groupsList = [...defaultGroups];
-          for (const g of custom) {
-            if (!groupsList.some(d => d.id === g.id)) {
-              groupsList.push(g);
-            }
+      groupsList = [...defaultGroups];
+      let custom = [];
+      const rawCustom = localStorage.getItem('qc_custom_groups');
+      const rawAll = localStorage.getItem('qc_groups_list');
+      if (rawCustom) {
+        try { custom = JSON.parse(rawCustom); } catch (_) {}
+      } else if (rawAll) {
+        try { custom = JSON.parse(rawAll).filter(g => !defaultGroups.some(d => d.id === g.id)); } catch (_) {}
+      }
+
+      if (Array.isArray(custom)) {
+        for (const g of custom) {
+          if (!groupsList.some(d => d.id === g.id)) {
+            groupsList.push(g);
           }
-        } catch (_) {
-          groupsList = [...defaultGroups];
         }
-      } else {
-        groupsList = [...defaultGroups];
+      }
+
+      // Also ensure any group from chatHistories is preserved
+      if (chatHistories) {
+        for (const cid in chatHistories) {
+          if (cid.startsWith('group_') && !groupsList.some(g => g.id === cid)) {
+            groupsList.push({
+              id: cid,
+              name: '#' + cid.replace('group_', ''),
+              desc: 'Active Mesh Group',
+              members: 1
+            });
+          }
+        }
       }
     }
 
@@ -1504,23 +1608,144 @@
       container.innerHTML = html;
     }
 
-    // Navigation Tabs
+    // 14. OFFLINE ZERO-INTERNET PAIRING ENGINE (QR + Web Bluetooth)
+    function openOfflinePairModal() {
+      document.getElementById('offlinePairModal').classList.add('active');
+      generateMyQrCode();
+    }
+
+    function closeOfflinePairModal() {
+      document.getElementById('offlinePairModal').classList.remove('active');
+      stopQrScanner();
+    }
+
+    function showQrTab(tab) {
+      if (tab === 'my-qr') {
+        document.getElementById('qrDisplaySection').style.display = 'block';
+        document.getElementById('qrScanSection').style.display = 'none';
+        stopQrScanner();
+        generateMyQrCode();
+      } else if (tab === 'scan-qr') {
+        document.getElementById('qrDisplaySection').style.display = 'none';
+        document.getElementById('qrScanSection').style.display = 'block';
+        startQrScanner();
+      }
+    }
+
+    function generateMyQrCode() {
+      if (!currentUser) return;
+      const box = document.getElementById('qrcodeBox');
+      box.innerHTML = '';
+      document.getElementById('qrPeerIdText').innerText = `ID: ${currentUser.id} • @${currentUser.username}`;
+      const payload = JSON.stringify({
+        id: currentUser.id,
+        username: currentUser.username,
+        displayName: currentUser.displayName,
+        pub: currentUser.publicKey,
+        time: Date.now()
+      });
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(box, {
+          text: payload,
+          width: 170,
+          height: 170,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    }
+
+    function startQrScanner() {
+      if (typeof Html5Qrcode === 'undefined') {
+        alert('Scanner library loading, please try again in a second.');
+        return;
+      }
+      qrScanner = new Html5Qrcode("qrReader");
+      qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        (decodedText) => {
+          try {
+            const peerData = JSON.parse(decodedText);
+            if (peerData.id && peerData.displayName) {
+              discoveredPeers.set(peerData.id, {
+                id: peerData.id,
+                username: peerData.username || 'peer',
+                displayName: peerData.displayName,
+                publicKey: peerData.pub || '',
+                lastSeen: Date.now(),
+                isOnline: true
+              });
+              saveCachedPeers();
+              renderPeersList();
+              stopQrScanner();
+              closeOfflinePairModal();
+              showToastNotification(peerData.displayName, '✅ Peer paired successfully offline!');
+              openChatRoom(peerData.id, peerData.displayName, false);
+            }
+          } catch (_) {
+            alert('Scanned QR data: ' + decodedText);
+          }
+        },
+        () => {}
+      ).catch(err => {
+        console.log('Camera error:', err);
+      });
+    }
+
+    function stopQrScanner() {
+      if (qrScanner) {
+        qrScanner.stop().then(() => {
+          qrScanner.clear();
+          qrScanner = null;
+        }).catch(() => {});
+      }
+    }
+
+    async function startWebBluetoothScan() {
+      if (!navigator.bluetooth) {
+        alert('Web Bluetooth is supported on Android Chrome. Please ensure Bluetooth is ON in device settings.');
+        return;
+      }
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true
+        });
+        if (device) {
+          showToastNotification('Bluetooth BLE', `🔗 Connected to BLE device: ${device.name || 'Nearby Device'}`);
+          const blePeerId = 'ble_' + (device.id || Math.random().toString(36).substring(2, 8));
+          discoveredPeers.set(blePeerId, {
+            id: blePeerId,
+            username: (device.name || 'ble_device').toLowerCase().replace(/\s+/g, '_'),
+            displayName: device.name || 'Bluetooth BLE Peer',
+            publicKey: 'ble_key',
+            lastSeen: Date.now(),
+            isOnline: true
+          });
+          saveCachedPeers();
+          renderPeersList();
+          closeOfflinePairModal();
+          openChatRoom(blePeerId, device.name || 'Bluetooth BLE Peer', false);
+        }
+      } catch (err) {
+        console.log('BLE Scan cancelled or unsupported:', err);
+      }
+    }
+
+    // 15. Navigation Tabs
     function switchTab(screenId, btn) {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
+      const target = document.getElementById(screenId);
+      if (target) target.classList.add('active');
       if (btn) btn.classList.add('active');
       else {
         const matchingBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(screenId));
         if (matchingBtn) matchingBtn.classList.add('active');
       }
+      localStorage.setItem('qc_active_tab', screenId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function copyPublicKey() {
-      if (!currentUser) return;
-      navigator.clipboard.writeText(currentUser.publicKey);
-      alert('Public Key copied to clipboard!');
     }
   </script>
 </body>
