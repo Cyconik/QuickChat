@@ -1183,16 +1183,19 @@
       // Direct or Group Message Packet with Multi-Hop Chain Forwarding (A ➔ B ➔ C ➔ D ➔ E)
       if (packet.type === 'P2P_MESSAGE') {
         const envelope = packet.envelope;
-        const isForMe = envelope.destinationId === currentUser.id || 
-                        envelope.destinationId === 'broadcast' || 
-                        envelope.destinationId === 'group_nearby_public' ||
-                        envelope.destinationId.startsWith('ble_') ||
-                        discoveredPeers.has(envelope.destinationId) ||
-                        directMeshLinks.has(envelope.destinationId);
-        const isGroupMsg = envelope.destinationId.startsWith('group_');
+        if (!envelope) return;
 
-        // Case A: Group Message or Direct message for ME -> Deliver!
-        if (isForMe || isGroupMsg) {
+        const isGroupMsg = envelope.destinationId === 'broadcast' || 
+                           envelope.destinationId === 'group_nearby_public' || 
+                           envelope.destinationId.startsWith('group_');
+
+        // Direct 1-to-1 message is ONLY for ME if destination matches MY unique ID or MY username
+        const isForMe = isGroupMsg || 
+                        envelope.destinationId === currentUser.id || 
+                        envelope.destinationId === currentUser.username;
+
+        // Case A: If it's a Group message OR direct message meant specifically for ME -> Deliver!
+        if (isForMe) {
           if (envelope.senderId !== currentUser.id) {
             onMessageReceived(envelope, isGroupMsg);
           }
@@ -1202,31 +1205,34 @@
         if (isMeshRelayEnabled && envelope.senderId !== currentUser.id) {
           const routeHistory = envelope.routeHistory || [envelope.senderId];
           // Loopback Protection: Forward to next nodes if this phone hasn't already relayed it
-          if (!routeHistory.includes(currentUser.id) && (!isForMe || isGroupMsg)) {
-            const hopsCount = (envelope.hops || 0) + 1;
-            const relayedEnvelope = {
-              ...envelope,
-              hops: hopsCount,
-              relayedBy: currentUser.id,
-              routeHistory: [...routeHistory, currentUser.id]
-            };
+          if (!routeHistory.includes(currentUser.id)) {
+            // Forward if message was for someone else (direct 1-to-1 relay) OR if it's a group broadcast
+            if (!isForMe || isGroupMsg) {
+              const hopsCount = (envelope.hops || 0) + 1;
+              const relayedEnvelope = {
+                ...envelope,
+                hops: hopsCount,
+                relayedBy: currentUser.id,
+                routeHistory: [...routeHistory, currentUser.id]
+              };
 
-            totalRelayedCount++;
-            const counterEl = document.getElementById('meshRelayCountStat');
-            if (counterEl) counterEl.innerText = totalRelayedCount;
-            const stat = document.getElementById('totalRelayedStat');
-            if (stat) stat.innerText = totalRelayedCount;
+              totalRelayedCount++;
+              const counterEl = document.getElementById('meshRelayCountStat');
+              if (counterEl) counterEl.innerText = totalRelayedCount;
+              const stat = document.getElementById('totalRelayedStat');
+              if (stat) stat.innerText = totalRelayedCount;
 
-            storeInRelayBuffer(relayedEnvelope);
+              storeInRelayBuffer(relayedEnvelope);
 
-            // Jittered multi-hop forwarding to prevent collision
-            setTimeout(() => {
-              transmitPacket({
-                type: 'P2P_MESSAGE',
-                packetId: 'hop_' + relayedEnvelope.messageId + '_' + hopsCount + '_' + Math.random().toString(36).substring(2, 6),
-                envelope: relayedEnvelope
-              });
-            }, Math.random() * 120 + 30);
+              // Jittered multi-hop forwarding to prevent collision
+              setTimeout(() => {
+                transmitPacket({
+                  type: 'P2P_MESSAGE',
+                  packetId: 'hop_' + relayedEnvelope.messageId + '_' + hopsCount + '_' + Math.random().toString(36).substring(2, 6),
+                  envelope: relayedEnvelope
+                });
+              }, Math.random() * 120 + 30);
+            }
           }
         }
       }
