@@ -1198,17 +1198,17 @@
           }
         } 
         
-        // Case B: Infinite Multi-Hop Forwarding Loop for intermediate nodes (A ➔ B ➔ C ➔ D ➔ E)
+        // Case B: Truly Infinite Multi-Hop Mesh Forwarding Loop (A ➔ B ➔ C ➔ D ➔ E ... ➔ ∞)
         if (isMeshRelayEnabled && envelope.senderId !== currentUser.id) {
-          const currentTtl = envelope.ttl !== undefined ? envelope.ttl : 32;
-          if (currentTtl > 0 && (!isForMe || isGroupMsg)) {
+          const routeHistory = envelope.routeHistory || [envelope.senderId];
+          // Loopback Protection: Forward to next nodes if this phone hasn't already relayed it
+          if (!routeHistory.includes(currentUser.id) && (!isForMe || isGroupMsg)) {
             const hopsCount = (envelope.hops || 0) + 1;
             const relayedEnvelope = {
               ...envelope,
-              ttl: currentTtl - 1,
               hops: hopsCount,
               relayedBy: currentUser.id,
-              routeHistory: [...(envelope.routeHistory || [envelope.senderId]), currentUser.id]
+              routeHistory: [...routeHistory, currentUser.id]
             };
 
             totalRelayedCount++;
