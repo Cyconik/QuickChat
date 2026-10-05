@@ -445,12 +445,12 @@
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
           <img src="./app_icon.png" style="width:40px; height:40px; border-radius:10px; object-fit:cover;">
           <div>
-            <div style="font-weight:800; font-size:16px;">QuickChat Mesh Chain</div>
-            <div style="font-size:12px; color:var(--accent);">Zero-Internet A ➔ B ➔ C ➔ D Multi-Hop Forwarding</div>
+            <div style="font-weight:800; font-size:16px;">QuickChat Infinite Mesh Chain</div>
+            <div style="font-size:12px; color:var(--accent);">Zero-Internet A ➔ B ➔ C ➔ ... ➔ ♾️ Unlimited Multi-Hop Relay</div>
           </div>
         </div>
         <p style="font-size:13px; color:var(--text-muted); line-height:1.4;">
-          QuickChat forms an autonomous decentralized mesh chain: User A connects to B, B to C, C to D. Messages from A reach D seamlessly through intermediate phone relays!
+          QuickChat forms a truly infinite decentralized mesh chain: User A connects to B, B to C, C to D, and onwards across 50+, 100+ or unlimited phones. Messages hop continuously across the whole network!
         </p>
         <div style="display:flex; gap:8px; margin-top:14px;">
           <button class="btn btn-sm btn-ble" onclick="initNativeBleMesh()">📡 Restart BLE Scan</button>
@@ -459,12 +459,12 @@
       </div>
 
       <div class="card">
-        <div class="card-title">📡 How Automatic Bluetooth Mesh Relaying Works:</div>
+        <div class="card-title">📡 How Infinite Bluetooth Mesh Relaying Works:</div>
         <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li><strong>Step 1: Open App on Phones:</strong> QuickChat turns on Native BLE radio and discovers nearby phones automatically.</li>
-          <li><strong>Step 2: Type Message:</strong> Send direct message or chat in <strong>#Nearby-Public-Mesh</strong>.</li>
-          <li><strong>Step 3: Multi-Hop Relay (A ➔ B ➔ C ➔ D):</strong> Intermediate phones forward the Bluetooth radio packets to reachable nodes.</li>
-          <li><strong>Step 4: Instant Sound & Alert:</strong> Target phone chimes 🔔, vibrates, and confirms delivery receipt.</li>
+          <li><strong>Step 1: Open App on Phones:</strong> QuickChat turns on Native BLE radio and discovers all nearby phones in range.</li>
+          <li><strong>Step 2: Type Message:</strong> Send direct private message or broadcast in <strong>#Nearby-Public-Mesh</strong>.</li>
+          <li><strong>Step 3: Infinite Multi-Hop Chain Relay (A ➔ B ➔ C ➔ ... ➔ ♾️):</strong> Every intermediate phone forwards the radio packets across endless nodes without any 4-node limit.</li>
+          <li><strong>Step 4: Instant Sound & Delivery:</strong> Target phone chimes 🔔, vibrates, and confirms delivery receipt across the entire chain.</li>
         </ol>
       </div>
     </section>
@@ -486,18 +486,16 @@
       <div class="mesh-chain-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <div style="font-weight:800; font-size:13px; color:var(--primary); display:flex; align-items:center; gap:6px;">
-            <span>🌐 Live Multi-Hop Mesh Chain</span>
+            <span>🌐 Live Multi-Hop Mesh Chain (∞ Infinite Loop)</span>
           </div>
           <span style="font-size:10.5px; background:rgba(0, 229, 255, 0.2); color:var(--primary); padding:2px 6px; border-radius:6px; font-weight:700;" id="activeLinksCountBadge">0 Bluetooth Links</span>
         </div>
         <div class="mesh-chain-nodes" id="meshChainVisualizerBox">
-          <div class="mesh-chain-node">📍 You (Node A)</div>
+          <div class="mesh-chain-node" style="border-color:var(--primary);">📍 You (This Node)</div>
           <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Nearby Phone B (Relay)</div>
+          <div class="mesh-chain-node" style="color:var(--accent); border-color:var(--accent);">📡 Live Multi-Hop Phone Relay</div>
           <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Phone C (Relay)</div>
-          <div class="mesh-chain-link">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light);">Phone D (End)</div>
+          <div class="mesh-chain-node" style="color:var(--secondary); border-color:var(--secondary); font-weight:800;">♾️ Infinite Chain Loop (No Limit)</div>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:var(--text-muted);">
           <span>Packets Forwarded: <strong id="meshRelayCountStat" style="color:var(--accent);">0</strong></span>
@@ -596,11 +594,11 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Multi-Hop Chain Forwarder Node</div>
+        <div class="card-title">Infinite Multi-Hop Chain Relay Node</div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <div>
             <div style="font-size:13px; font-weight:700;">Mesh Relay Mode</div>
-            <div style="font-size:11px; color:var(--text-muted);">Route packets between A ➔ B ➔ C ➔ D</div>
+            <div style="font-size:11px; color:var(--text-muted);">Route packets across ∞ unlimited multi-hop phone relays</div>
           </div>
           <button class="btn btn-sm btn-accent" id="toggleRelayBtn" onclick="toggleMeshRelay()">Enabled ✓</button>
         </div>
@@ -1464,27 +1462,35 @@
 
       if (uniquePeers.length === 0 && directCount === 0) {
         container.innerHTML = `
-          <div class="mesh-chain-node" style="flex-shrink:0;">📍 You (${currentUser ? currentUser.displayName : 'Node A'})</div>
+          <div class="mesh-chain-node" style="border-color:var(--primary); flex-shrink:0;">📍 You (${currentUser ? currentUser.displayName : 'This Node'})</div>
           <div class="mesh-chain-link" style="flex-shrink:0;">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light); flex-shrink:0;">Nearby Phone B (Relay)</div>
+          <div class="mesh-chain-node" style="color:var(--accent); border-color:var(--accent); flex-shrink:0; background:rgba(0, 245, 155, 0.08);">
+            📡 Ready for ∞ Infinite Phone Relays
+          </div>
           <div class="mesh-chain-link" style="flex-shrink:0;">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light); flex-shrink:0;">Phone C (Relay)</div>
-          <div class="mesh-chain-link" style="flex-shrink:0;">➔➔</div>
-          <div class="mesh-chain-node" style="color:var(--text-muted); border-color:var(--surface-light); flex-shrink:0;">Phone D (End)</div>
+          <div class="mesh-chain-node" style="color:var(--secondary); border-color:var(--secondary); flex-shrink:0; font-weight:800;">
+            ♾️ Unlimited Mesh Chain
+          </div>
         `;
         return;
       }
 
-      let html = `<div class="mesh-chain-node" style="border-color:var(--accent); flex-shrink:0;">📍 You (${currentUser ? currentUser.displayName : 'Node A'})</div>`;
+      let html = `<div class="mesh-chain-node" style="border-color:var(--accent); flex-shrink:0;">📍 You (${currentUser ? currentUser.displayName : 'This Node'})</div>`;
       for (const peer of uniquePeers) {
         const isDirect = (peer.hopsAway || 1) <= 1;
         html += `
           <div class="mesh-chain-link" style="flex-shrink:0;">${isDirect ? '⚡🟢' : '🔄📡'}</div>
           <div class="mesh-chain-node" style="border-color:${isDirect ? 'var(--accent)' : 'var(--secondary)'}; color:${isDirect ? 'var(--accent)' : 'var(--secondary)'}; font-weight:800; flex-shrink:0;">
-            ${peer.displayName} ${(peer.hopsAway || 1) > 1 ? '(' + peer.hopsAway + 'H)' : '📡'}
+            ${peer.displayName} ${(peer.hopsAway || 1) > 1 ? '(' + peer.hopsAway + ' Hops)' : '📡 Direct'}
           </div>
         `;
       }
+      html += `
+        <div class="mesh-chain-link" style="flex-shrink:0;">➔➔</div>
+        <div class="mesh-chain-node" style="color:var(--accent); border-color:var(--accent); font-weight:800; flex-shrink:0; background:rgba(0, 245, 155, 0.1);">
+          ♾️ Infinite Multi-Hop Loop Active
+        </div>
+      `;
       container.innerHTML = html;
     }
 
@@ -1709,7 +1715,7 @@
         destinationId: activeChatId,
         text: text,
         time: timeStr,
-        ttl: 8,
+        ttl: 99999, // Infinite Multi-Hop Loop (Unlimited Hops Relay)
         hops: 0,
         routeHistory: [currentUser.id],
         createdAt: Date.now()
