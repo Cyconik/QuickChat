@@ -335,7 +335,40 @@
     .modal-overlay.active { display: flex; }
     .modal-content { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 20px; padding: 20px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
     .install-step-box { background: var(--surface-hi); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-    .step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color:#0B0E17; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0; }
+    .suggestion-chip {
+      background: var(--surface-hi);
+      border: 1px solid var(--surface-light);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .suggestion-chip:hover, .suggestion-chip:active {
+      border-color: var(--primary);
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 229, 255, 0.25);
+    }
+    .admin-badge {
+      background: linear-gradient(135deg, #FFB300, #FF6F00);
+      color: #000;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
   </style>
 </head>
 <body>
@@ -360,31 +393,48 @@
         </div>
       </div>
       <div style="display:flex; gap:6px;">
-        <button class="btn btn-sm btn-ble" onclick="openOfflinePairModal()">
+        <button class="btn btn-sm btn-ble" onclick="refreshBleDiscovery()">
           <svg class="icon-sm" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-          Mesh Link
+          BLE Mesh
         </button>
       </div>
     </header>
 
-    <!-- ONBOARDING SCREEN -->
+    <!-- ONBOARDING & USERNAME SELECTION SCREEN -->
     <div id="onboardingView" class="screen">
-      <div style="text-align:center; padding:20px 0 10px;">
-        <img src="./app_icon.png" style="width:76px; height:76px; border-radius:22px; box-shadow:0 0 24px var(--primary-glow); margin-bottom:14px; object-fit:cover;">
-        <h2 style="font-size:22px; font-weight:800;">Welcome to QuickChat</h2>
-        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Multi-Hop Mesh communication without SIM, Cellular or Internet.</p>
+      <div style="text-align:center; padding:16px 0 8px;">
+        <img src="./app_icon.png" style="width:72px; height:72px; border-radius:20px; box-shadow:0 0 24px var(--primary-glow); margin-bottom:12px; object-fit:cover;">
+        <h2 style="font-size:22px; font-weight:800; letter-spacing:-0.5px;">Welcome to QuickChat</h2>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">100% Offline Bluetooth Multi-Hop Mesh Messaging</p>
       </div>
 
-      <div class="card" style="margin-top:16px;">
-        <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">CHOOSE USERNAME</label>
-        <input type="text" id="onboardUsername" class="input-field" placeholder="e.g. rahul_dev" value="">
-        
-        <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">DISPLAY NAME</label>
-        <input type="text" id="onboardDisplayName" class="input-field" placeholder="e.g. Rahul Sharma" value="">
+      <div class="card" style="margin-top:10px;">
+        <div style="font-size:14px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:6px; color:var(--primary);">
+          <span>👤 Setup Your Profile & Username</span>
+        </div>
 
-        <button class="btn" onclick="saveUserIdentity()">
+        <!-- 1-TAP QUICK NICKNAME SUGGESTIONS -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="font-size:11px; font-weight:700; color:var(--accent); letter-spacing:0.5px;">⚡ QUICK SUGGESTIONS (TAP TO PICK)</label>
+            <button class="btn btn-sm btn-secondary" style="font-size:10px; padding:2px 8px;" onclick="renderNameSuggestions()">🎲 Shuffle</button>
+          </div>
+          <div id="nicknameSuggestionsContainer" style="display:flex; flex-wrap:wrap; gap:6px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--surface-light); padding-top:14px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:5px;">DISPLAY NAME</label>
+          <input type="text" id="onboardDisplayName" class="input-field" placeholder="e.g. Cyber Rider" oninput="onDisplayNameInput(this.value)">
+          
+          <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:5px;">USERNAME (@handle)</label>
+          <input type="text" id="onboardUsername" class="input-field" placeholder="e.g. cyber_rider">
+        </div>
+
+        <button class="btn btn-accent" style="margin-top:8px; font-size:14px; padding:12px;" onclick="saveUserIdentity()">
           <svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Start Messaging Now
+          Launch QuickChat Mesh 🚀
         </button>
       </div>
     </div>
@@ -515,7 +565,9 @@
               <div style="font-size:10px; color:var(--accent);" id="chatTargetSub">● Multi-Hop Mesh Chain Active</div>
             </div>
           </div>
-          <button class="btn btn-sm btn-secondary" onclick="clearCurrentChat()">Clear</button>
+          <div id="chatActionBtnContainer">
+            <button class="btn btn-sm btn-secondary" onclick="clearCurrentChat()">Clear</button>
+          </div>
         </div>
 
         <div class="chat-messages" id="chatMessagesBox">
@@ -538,6 +590,9 @@
         <div style="font-weight:800; font-size:16px;" id="profileDisplayName">User</div>
         <div style="font-size:12px; color:var(--text-muted);" id="profileUsername">@user</div>
         <div style="font-size:11px; color:var(--accent); margin-top:4px;" id="profileUserId">ID: ...</div>
+        <button class="btn btn-sm btn-ble" style="margin-top:12px; font-size:12px; padding:6px 14px; width:auto; display:inline-flex;" onclick="openOnboardingEditModal()">
+          ✏️ Change Username & Name
+        </button>
       </div>
 
       <div class="card">
@@ -613,6 +668,8 @@
         <button class="btn btn-secondary" onclick="closeCreateGroupModal()">Cancel</button>
         <button class="btn btn-accent" onclick="createNewGroup()">Create Group</button>
       </div>
+    </div>
+  </div>
   <!-- SCREEN NAVIGATION END -->
 
   <script>
@@ -874,50 +931,123 @@
       }
     }
 
+    const nicknamePool = [
+      { display: 'Shadow Wolf', user: 'shadow_wolf', icon: '🐺' },
+      { display: 'Mesh Rider', user: 'mesh_rider', icon: '🚀' },
+      { display: 'Cyber Node', user: 'cyber_node', icon: '⚡' },
+      { display: 'Alpha Pilot', user: 'alpha_pilot', icon: '✈️' },
+      { display: 'Neon Pulse', user: 'neon_pulse', icon: '💫' },
+      { display: 'Ghost Relay', user: 'ghost_relay', icon: '👻' },
+      { display: 'Hyper Link', user: 'hyper_link', icon: '🌐' },
+      { display: 'Matrix Prime', user: 'matrix_prime', icon: '🌀' },
+      { display: 'Apex Raider', user: 'apex_raider', icon: '🛡️' },
+      { display: 'Echo Star', user: 'echo_star', icon: '⭐' },
+      { display: 'Vortex Scout', user: 'vortex_scout', icon: '🌪️' },
+      { display: 'Zenith Master', user: 'zenith_master', icon: '🔮' }
+    ];
+
+    function getRandomSuggestedName() {
+      const item = nicknamePool[Math.floor(Math.random() * nicknamePool.length)];
+      const num = Math.floor(Math.random() * 89 + 10);
+      return {
+        display: `${item.display} ${num}`,
+        user: `${item.user}_${num}`,
+        icon: item.icon
+      };
+    }
+
+    function renderNameSuggestions() {
+      const container = document.getElementById('nicknameSuggestionsContainer');
+      if (!container) return;
+      const shuffled = [...nicknamePool].sort(() => 0.5 - Math.random()).slice(0, 6);
+      let html = '';
+      shuffled.forEach(item => {
+        const num = Math.floor(Math.random() * 89 + 10);
+        const disp = `${item.display} ${num}`;
+        const u = `${item.user}_${num}`;
+        html += `
+          <button type="button" class="suggestion-chip" onclick="selectSuggestedName('${disp.replace(/'/g, "\\'")}', '${u}')">
+            <span>${item.icon}</span> ${disp}
+          </button>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function selectSuggestedName(displayName, username) {
+      document.getElementById('onboardDisplayName').value = displayName;
+      document.getElementById('onboardUsername').value = username;
+    }
+
+    function onDisplayNameInput(val) {
+      const uField = document.getElementById('onboardUsername');
+      if (uField && (!uField.value || uField.dataset.autoFilled !== 'false')) {
+        uField.value = val.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_');
+      }
+    }
+
+    function showOnboardingScreen() {
+      renderNameSuggestions();
+      const initial = getRandomSuggestedName();
+      document.getElementById('onboardDisplayName').value = initial.display;
+      document.getElementById('onboardUsername').value = initial.user;
+      switchTab('onboardingView');
+    }
+
+    function openOnboardingEditModal() {
+      if (currentUser) {
+        document.getElementById('onboardDisplayName').value = currentUser.displayName || '';
+        document.getElementById('onboardUsername').value = currentUser.username || '';
+      }
+      renderNameSuggestions();
+      switchTab('onboardingView');
+    }
+
     function loadStoredIdentity() {
       const stored = localStorage.getItem('qc_user_identity');
       if (stored) {
-        currentUser = JSON.parse(stored);
+        try {
+          currentUser = JSON.parse(stored);
+          updateIdentityUI();
+          initNativeBleMesh();
+          const lastTab = localStorage.getItem('qc_active_tab') || 'screen-nearby';
+          switchTab(lastTab === 'onboardingView' ? 'screen-nearby' : lastTab);
+        } catch (_) {
+          showOnboardingScreen();
+        }
       } else {
-        const defaultName = 'User_' + Math.floor(Math.random() * 899 + 100);
-        const userId = 'usr_' + Math.random().toString(16).substring(2, 8).toUpperCase();
-        const pubKey = 'pub_key_' + Math.random().toString(36).substring(2, 12);
-        currentUser = {
-          id: userId,
-          username: defaultName.toLowerCase(),
-          displayName: defaultName,
-          publicKey: pubKey,
-          createdAt: Date.now()
-        };
-        localStorage.setItem('qc_user_identity', JSON.stringify(currentUser));
+        // First install / first launch: Ask user to choose or type username!
+        showOnboardingScreen();
       }
-      updateIdentityUI();
-      initNativeBleMesh();
     }
 
     function saveUserIdentity() {
-      const u = document.getElementById('onboardUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '') || 'anonymous';
-      const d = document.getElementById('onboardDisplayName').value.trim() || 'Anonymous User';
-      const userId = 'usr_' + Math.random().toString(16).substring(2, 8).toUpperCase();
-      const pubKey = 'pub_key_' + Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
+      const d = document.getElementById('onboardDisplayName').value.trim() || 'Anonymous Mesh User';
+      let u = document.getElementById('onboardUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!u) u = d.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'user_' + Math.floor(Math.random() * 899 + 100);
+
+      const userId = (currentUser && currentUser.id) ? currentUser.id : ('usr_' + Math.random().toString(16).substring(2, 8).toUpperCase());
+      const pubKey = (currentUser && currentUser.publicKey) ? currentUser.publicKey : ('pub_key_' + Math.random().toString(36).substring(2, 12));
 
       currentUser = {
         id: userId,
         username: u,
         displayName: d,
         publicKey: pubKey,
-        createdAt: Date.now()
+        createdAt: currentUser ? currentUser.createdAt : Date.now()
       };
 
       localStorage.setItem('qc_user_identity', JSON.stringify(currentUser));
-      document.getElementById('onboardingView').classList.remove('active');
       updateIdentityUI();
-
       broadcastPresence();
       initNativeBleMesh();
+
       if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
       }
+
+      showToastNotification('QuickChat Profile', `👋 Identity set to @${u} (${d})`);
+      switchTab('screen-nearby');
     }
 
     function updateIdentityUI() {
@@ -1246,6 +1376,28 @@
           setTimeout(() => transmitPacket(packet), 40);
         }
       }
+
+      // Group Chat Cleared by Admin Broadcast
+      if (packet.type === 'CLEAR_GROUP_CHAT') {
+        const { groupId, adminId, clearedBy } = packet;
+        if (groupId) {
+          chatHistories[groupId] = [];
+          unreadCountsByChat[groupId] = 0;
+          localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
+          localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
+          refreshTotalUnreadCount();
+          if (activeChatId === groupId) {
+            renderChatMessages();
+          }
+          updateChatsList();
+          showToastNotification('QuickChat', `🧹 Group chat was cleared by Admin (${clearedBy || 'Creator'})`);
+        }
+
+        // Multi-hop relay clear broadcast across the chain
+        if (isMeshRelayEnabled && adminId !== (currentUser ? currentUser.id : '')) {
+          setTimeout(() => transmitPacket(packet), 40);
+        }
+      }
     }
 
     function cleanupInactivePeers() {
@@ -1399,13 +1551,17 @@
     function createNewGroup() {
       const name = document.getElementById('newGroupName').value.trim();
       const desc = document.getElementById('newGroupDesc').value.trim() || 'P2P Mesh Community';
-      if (!name) return;
+      if (!name || !currentUser) return;
 
       const groupId = 'group_' + Date.now().toString(36);
       const newGroup = {
         id: groupId,
         name: name,
         desc: desc,
+        creatorId: currentUser.id,
+        creatorName: currentUser.displayName,
+        creatorUsername: currentUser.username,
+        createdAt: Date.now(),
         members: 1
       };
 
@@ -1469,16 +1625,21 @@
       let html = '';
       for (const group of groupsList) {
         const isDefault = defaultGroups.some(d => d.id === group.id);
+        const isAdmin = group.creatorId && currentUser && group.creatorId === currentUser.id;
         const unread = unreadCountsByChat[group.id] || 0;
         html += `
           <div class="peer-item ${unread > 0 ? 'has-unread' : ''}" style="cursor:pointer;" onclick="openChatRoom('${group.id}', '${group.name.replace(/'/g, "\\'")}', true)">
             <div class="peer-item-left">
               <div class="peer-avatar group-avatar ${unread > 0 ? 'unread-avatar-glow' : ''}">${isDefault ? '📢' : '#'}</div>
               <div>
-                <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}">
-                  ${group.name} ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
+                <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}; display:flex; align-items:center; gap:6px;">
+                  <span>${group.name}</span>
+                  ${isAdmin ? '<span class="admin-badge">👑 ADMIN</span>' : ''}
+                  ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
                 </div>
-                <div class="peer-sub">${group.desc}</div>
+                <div class="peer-sub">
+                  ${group.desc} ${(group.creatorName && !isAdmin) ? ' • by @' + (group.creatorUsername || group.creatorName) : ''}
+                </div>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
@@ -1506,7 +1667,25 @@
       refreshTotalUnreadCount();
 
       document.getElementById('chatTargetName').innerText = targetName;
-      document.getElementById('chatTargetSub').innerText = isGroup ? '● Multi-Hop BLE Broadcast' : '● Direct Bluetooth Radio Link';
+      const actionContainer = document.getElementById('chatActionBtnContainer');
+
+      if (isGroup) {
+        const group = groupsList.find(g => g.id === targetId);
+        const isAdmin = group && group.creatorId && group.creatorId === (currentUser ? currentUser.id : '');
+        const adminLabel = (group && group.creatorName) ? ` • Admin: ${group.creatorName}` : '';
+        
+        document.getElementById('chatTargetSub').innerText = '● Multi-Hop BLE Broadcast' + (isAdmin ? ' (👑 You are Admin)' : adminLabel);
+
+        if (isAdmin) {
+          actionContainer.innerHTML = `<button class="btn btn-sm btn-danger" style="background:linear-gradient(135deg, #ef4444, #b91c1c); color:#fff; border:none; padding:5px 12px; font-size:11px; border-radius:8px; font-weight:700; box-shadow:0 0 10px rgba(239,68,68,0.3);" onclick="clearCurrentChat()">Clear (Admin) 🗑️</button>`;
+        } else {
+          actionContainer.innerHTML = `<span style="font-size:10.5px; color:var(--text-muted); background:var(--surface-hi); padding:4px 8px; border-radius:6px; font-weight:600; border:1px solid var(--surface-light);">🔒 Member</span>`;
+        }
+      } else {
+        document.getElementById('chatTargetSub').innerText = '● Direct Bluetooth Radio Link';
+        actionContainer.innerHTML = `<button class="btn btn-sm btn-secondary" style="padding:5px 12px; font-size:11px;" onclick="clearCurrentChat()">Clear</button>`;
+      }
+
       renderChatMessages();
       updateChatsList();
       renderGroupsList();
@@ -1632,15 +1811,43 @@
     }
 
     function clearCurrentChat() {
-      if (activeChatId && chatHistories[activeChatId]) {
-        chatHistories[activeChatId] = [];
-        unreadCountsByChat[activeChatId] = 0;
-        localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
-        localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
-        refreshTotalUnreadCount();
-        renderChatMessages();
-        updateChatsList();
+      if (!activeChatId || !currentUser) return;
+      const isGroup = activeChatId.startsWith('group_') || activeChatId === 'broadcast';
+
+      if (isGroup) {
+        const group = groupsList.find(g => g.id === activeChatId);
+        
+        // Check if user is the admin / creator
+        const isAdmin = group && group.creatorId && group.creatorId === currentUser.id;
+        
+        if (!isAdmin) {
+          showToastNotification('QuickChat Warning', '⚠️ Only the group creator / admin can clear this group chat.');
+          alert('⚠️ Only the group creator / admin can clear this group chat.');
+          return;
+        }
+
+        if (!confirm(`Are you sure you want to clear this group chat for ALL mesh members?`)) {
+          return;
+        }
+
+        // Broadcast admin clear to all mesh nodes
+        transmitPacket({
+          type: 'CLEAR_GROUP_CHAT',
+          groupId: activeChatId,
+          adminId: currentUser.id,
+          clearedBy: currentUser.displayName
+        });
       }
+
+      // Clear local history
+      chatHistories[activeChatId] = [];
+      unreadCountsByChat[activeChatId] = 0;
+      localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
+      localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
+      refreshTotalUnreadCount();
+      renderChatMessages();
+      updateChatsList();
+      showToastNotification('QuickChat', '🧹 Chat history cleared successfully.');
     }
 
     function updateUnreadBadge() {
