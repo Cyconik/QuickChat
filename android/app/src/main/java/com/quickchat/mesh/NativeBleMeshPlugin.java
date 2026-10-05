@@ -472,7 +472,7 @@ public class NativeBleMeshPlugin extends Plugin {
             return;
         }
 
-        device.connectGatt(getContext(), false, new BluetoothGattCallback() {
+        BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
             @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
@@ -536,6 +536,12 @@ public class NativeBleMeshPlugin extends Plugin {
                 super.onCharacteristicChanged(gatt, characteristic, value);
                 dispatchIncomingPacket(gatt.getDevice().getAddress(), value != null ? value : characteristic.getValue());
             }
-        });
+        };
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            device.connectGatt(getContext(), false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+        } else {
+            device.connectGatt(getContext(), false, gattCallback);
+        }
     }
 }
