@@ -166,6 +166,10 @@ public class NativeBleMeshPlugin extends Plugin {
         call.resolve(ret);
     }
 
+    private final Map<String, Map<Integer, String>> packetAssembler = new ConcurrentHashMap<>();
+    private final Map<String, Integer> packetAssemblerTotals = new ConcurrentHashMap<>();
+    private int packetSequenceCounter = 0;
+
     @PluginMethod
     public void broadcastBlePacket(PluginCall call) {
         String jsonPayload = call.getString("packetJson");
@@ -175,57 +179,77 @@ public class NativeBleMeshPlugin extends Plugin {
         }
 
         int sentCount = 0;
-        byte[] payloadBytes = jsonPayload.getBytes(StandardCharsets.UTF_8);
+        List<byte[]> chunksToSend = new ArrayList<>();
+        byte[] rawBytes = jsonPayload.getBytes(StandardCharsets.UTF_8);
 
-        // 1. Send to all peers where we are the GATT Client (Write to RX)
-        for (Map.Entry<String, BluetoothGatt> entry : connectedGattClients.entrySet()) {
-            BluetoothGatt gatt = entry.getValue();
-            try {
-                BluetoothGattService service = gatt.getService(SERVICE_UUID);
-                if (service != null) {
-                    BluetoothGattCharacteristic rxChar = service.getCharacteristic(RX_CHAR_UUID);
-                    if (rxChar != null) {
-                        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                int res = gatt.writeCharacteristic(rxChar, payloadBytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                                if (res == 0) sentCount++;
-                            } else {
-                                rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                                rxChar.setValue(payloadBytes);
-                                boolean ok = gatt.writeCharacteristic(rxChar);
-                                if (ok) sentCount++;
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Write characteristic error for: " + entry.getKey(), e);
+        // If payload is small enough, send as-is
+        if (rawBytes.length <= 180) {
+            chunksToSend.add(rawBytes);
+        } else {
+            // Split into safe chunks of 160 bytes with header: QC:{seqId}:{idx}:{total}:{data}
+            String seqId = "p" + (++packetSequenceCounter % 10000);
+            int chunkSize = 150;
+            int totalChunks = (int) Math.ceil((double) jsonPayload.length() / chunkSize);
+            for (int i = 0; i < totalChunks; i++) {
+                int start = i * chunkSize;
+                int end = Math.min(jsonPayload.length(), start + chunkSize);
+                String sub = jsonPayload.substring(start, end);
+                String chunkHeader = "QC:" + seqId + ":" + i + ":" + totalChunks + ":" + sub;
+                chunksToSend.add(chunkHeader.getBytes(StandardCharsets.UTF_8));
             }
         }
 
-        // 2. Send to all peers connected to our GATT Server (Notify TX)
-        if (gattServer != null) {
-            try {
-                BluetoothGattService serverService = gattServer.getService(SERVICE_UUID);
-                if (serverService != null) {
-                    BluetoothGattCharacteristic txChar = serverService.getCharacteristic(TX_CHAR_UUID);
-                    if (txChar != null) {
-                        for (Map.Entry<String, BluetoothDevice> serverEntry : connectedGattServers.entrySet()) {
+        for (byte[] payloadBytes : chunksToSend) {
+            // 1. Send to all peers where we are the GATT Client (Write to RX)
+            for (Map.Entry<String, BluetoothGatt> entry : connectedGattClients.entrySet()) {
+                BluetoothGatt gatt = entry.getValue();
+                try {
+                    BluetoothGattService service = gatt.getService(SERVICE_UUID);
+                    if (service != null) {
+                        BluetoothGattCharacteristic rxChar = service.getCharacteristic(RX_CHAR_UUID);
+                        if (rxChar != null) {
                             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    int res = gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false, payloadBytes);
+                                    int res = gatt.writeCharacteristic(rxChar, payloadBytes, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
                                     if (res == 0) sentCount++;
                                 } else {
-                                    txChar.setValue(payloadBytes);
-                                    boolean ok = gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false);
+                                    rxChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                                    rxChar.setValue(payloadBytes);
+                                    boolean ok = gatt.writeCharacteristic(rxChar);
                                     if (ok) sentCount++;
                                 }
                             }
                         }
                     }
+                } catch (Exception e) {
+                    Log.w(TAG, "Write characteristic error for: " + entry.getKey(), e);
                 }
-            } catch (Exception e) {
-                Log.w(TAG, "Notify characteristic error: ", e);
+            }
+
+            // 2. Send to all peers connected to our GATT Server (Notify TX)
+            if (gattServer != null) {
+                try {
+                    BluetoothGattService serverService = gattServer.getService(SERVICE_UUID);
+                    if (serverService != null) {
+                        BluetoothGattCharacteristic txChar = serverService.getCharacteristic(TX_CHAR_UUID);
+                        if (txChar != null) {
+                            for (Map.Entry<String, BluetoothDevice> serverEntry : connectedGattServers.entrySet()) {
+                                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        int res = gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false, payloadBytes);
+                                        if (res == 0) sentCount++;
+                                    } else {
+                                        txChar.setValue(payloadBytes);
+                                        boolean ok = gattServer.notifyCharacteristicChanged(serverEntry.getValue(), txChar, false);
+                                        if (ok) sentCount++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Notify characteristic error: ", e);
+                }
             }
         }
 
@@ -244,13 +268,50 @@ public class NativeBleMeshPlugin extends Plugin {
     private void dispatchIncomingPacket(String senderAddr, byte[] value) {
         if (value != null && value.length > 0) {
             String rawStr = new String(value, StandardCharsets.UTF_8);
-            mainHandler.post(() -> {
-                JSObject eventData = new JSObject();
-                eventData.put("rawPacket", rawStr);
-                eventData.put("senderHardwareId", senderAddr);
-                notifyListeners("onPacketReceived", eventData);
-            });
+
+            // Check if chunked packet
+            if (rawStr.startsWith("QC:")) {
+                String[] parts = rawStr.split(":", 5);
+                if (parts.length == 5) {
+                    String seqId = parts[1];
+                    try {
+                        int chunkIdx = Integer.parseInt(parts[2]);
+                        int totalChunks = Integer.parseInt(parts[3]);
+                        String chunkData = parts[4];
+
+                        String key = senderAddr + "_" + seqId;
+                        Map<Integer, String> chunksMap = packetAssembler.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
+                        chunksMap.put(chunkIdx, chunkData);
+                        packetAssemblerTotals.put(key, totalChunks);
+
+                        if (chunksMap.size() == totalChunks) {
+                            StringBuilder fullJson = new StringBuilder();
+                            for (int i = 0; i < totalChunks; i++) {
+                                String part = chunksMap.get(i);
+                                if (part != null) fullJson.append(part);
+                            }
+                            packetAssembler.remove(key);
+                            packetAssemblerTotals.remove(key);
+                            dispatchCompleteJson(senderAddr, fullJson.toString());
+                        }
+                        return;
+                    } catch (Exception e) {
+                        Log.w(TAG, "Chunk parsing error", e);
+                    }
+                }
+            }
+
+            dispatchCompleteJson(senderAddr, rawStr);
         }
+    }
+
+    private void dispatchCompleteJson(String senderAddr, String rawJson) {
+        mainHandler.post(() -> {
+            JSObject eventData = new JSObject();
+            eventData.put("rawPacket", rawJson);
+            eventData.put("senderHardwareId", senderAddr);
+            notifyListeners("onPacketReceived", eventData);
+        });
     }
 
     private void startGattServer() {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>QuickChat — Offline Multi-Hop Mesh & Chain Relay</title>
+  <title>QuickChat — Offline Multi-Hop Mesh Groups</title>
   <link rel="icon" type="image/png" href="./app_icon.png">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0B0E17">
@@ -19,9 +19,6 @@
   
   <!-- Paho MQTT WebSocket Client for Multi-Device Global Mesh Relay -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-  <!-- Lightweight QR Code Generator & Camera Scanner for Zero-Network Direct WebRTC Pairing -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
     :root {
@@ -102,7 +99,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 6px 20px rgba(124, 77, 255, 0.2);
+      box-shadow: 0 6px 20px rgba(124, 77, 255, 0.25);
       transition: transform 0.15s;
     }
     .public-group-card:active { transform: scale(0.98); }
@@ -186,7 +183,7 @@
     .empty-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
     .empty-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; max-width: 320px; margin: 0 auto 16px; }
 
-    /* Peer & Group List Items */
+    /* Group & Node List Items */
     .peer-item {
       display: flex;
       align-items: center;
@@ -258,7 +255,7 @@
     .chat-container { display: flex; flex-direction: column; height: calc(100vh - 120px); }
     .chat-header-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 12px; border-bottom: 1px solid var(--surface-light); margin-bottom: 10px; }
     .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
-    .bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.35; word-break: break-word; }
+    .bubble { max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.35; word-break: break-word; }
     .bubble-in { align-self: flex-start; background: var(--surface-hi); border-bottom-left-radius: 2px; }
     .bubble-out { align-self: flex-end; background: linear-gradient(135deg, rgba(0, 229, 255, 0.3), rgba(124, 77, 255, 0.3)); border: 1px solid rgba(0, 229, 255, 0.3); border-bottom-right-radius: 2px; }
     .bubble-meta { font-size: 9px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
@@ -296,7 +293,7 @@
       position: relative;
     }
     .nav-btn.active { color: var(--primary); font-weight: 700; }
-    .nav-badge { position: absolute; top: 0; right: 8px; background: var(--primary); color: #050B14; border-radius: 10px; font-size: 9px; font-weight: 800; padding: 1px 5px; display: none; }
+    .nav-badge { position: absolute; top: 0; right: 8px; background: var(--accent); color: #050B14; border-radius: 10px; font-size: 9px; font-weight: 800; padding: 1px 5px; display: none; }
 
     /* Notification Toast Banner */
     #notificationToast {
@@ -334,7 +331,6 @@
     }
     .modal-overlay.active { display: flex; }
     .modal-content { background: var(--surface); border: 1px solid var(--surface-light); border-radius: 20px; padding: 20px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
-    .install-step-box { background: var(--surface-hi); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
     .suggestion-chip {
       background: var(--surface-hi);
       border: 1px solid var(--surface-light);
@@ -373,29 +369,29 @@
 </head>
 <body>
 
-  <!-- Floating Notification Toast (Alerts on EVERY incoming message) -->
+  <!-- Floating Notification Toast (Alerts on EVERY incoming group message) -->
   <div id="notificationToast" onclick="onToastClicked()">
-    <div class="toast-avatar" id="toastAvatar">R</div>
+    <div class="toast-avatar" id="toastAvatar">📢</div>
     <div>
       <div style="font-weight:800; font-size:13px;" id="toastTitle">New Message</div>
-      <div style="font-size:12px; color:var(--text-muted);" id="toastBody">Hello there!</div>
+      <div style="font-size:12px; color:var(--text-muted);" id="toastBody">Hello mesh group!</div>
     </div>
   </div>
 
   <div id="app-root">
     <!-- Top Header Bar -->
     <header class="header">
-      <div class="header-left" onclick="switchTab('screen-about')">
+      <div class="header-left" onclick="switchTab('screen-groups')">
         <img src="./app_icon.png" alt="QuickChat Logo" class="header-logo">
         <div>
-          <div class="header-title">QuickChat</div>
+          <div class="header-title">QuickChat Groups</div>
           <div class="header-subtitle"><span id="headerDot" class="live-dot"></span> <span id="headerStatusText">OFFLINE MESH ACTIVE</span></div>
         </div>
       </div>
       <div style="display:flex; gap:6px;">
         <button class="btn btn-sm btn-ble" onclick="refreshBleDiscovery()">
           <svg class="icon-sm" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-          BLE Mesh
+          BLE Scan
         </button>
       </div>
     </header>
@@ -405,7 +401,7 @@
       <div style="text-align:center; padding:16px 0 8px;">
         <img src="./app_icon.png" style="width:72px; height:72px; border-radius:20px; box-shadow:0 0 24px var(--primary-glow); margin-bottom:12px; object-fit:cover;">
         <h2 style="font-size:22px; font-weight:800; letter-spacing:-0.5px;">Welcome to QuickChat</h2>
-        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">100% Offline Bluetooth Multi-Hop Mesh Messaging</p>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">100% Offline Bluetooth Multi-Hop Mesh Groups</p>
       </div>
 
       <div class="card" style="margin-top:10px;">
@@ -439,42 +435,51 @@
       </div>
     </div>
 
-    <!-- SCREEN 1: ABOUT & OFFLINE GUIDE -->
-    <section id="screen-about" class="screen">
-      <div class="card" style="background:linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(124, 77, 255, 0.12)); border-color:rgba(0, 229, 255, 0.3);">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <img src="./app_icon.png" style="width:40px; height:40px; border-radius:10px; object-fit:cover;">
+    <!-- TAB 1: MESH GROUPS & CHANNELS (MAIN HUB) -->
+    <section id="screen-groups" class="screen active">
+      <!-- Fast Action Public Channel Banner -->
+      <div class="public-group-card" onclick="openChatRoom('group_nearby_public', '#Nearby-Public-Mesh', true)">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="peer-avatar group-avatar" style="width:44px; height:44px; font-size:18px;">📢</div>
           <div>
-            <div style="font-weight:800; font-size:16px;">QuickChat Infinite Mesh Chain</div>
-            <div style="font-size:12px; color:var(--accent);">Zero-Internet A ➔ B ➔ C ➔ ... ➔ ♾️ Unlimited Multi-Hop Relay</div>
+            <div style="font-weight:800; font-size:14px;">#Nearby-Public-Mesh</div>
+            <div style="font-size:11px; color:var(--text-muted);">Main broadcast for ALL nearby & multi-hop phones</div>
           </div>
         </div>
-        <p style="font-size:13px; color:var(--text-muted); line-height:1.4;">
-          QuickChat forms a truly infinite decentralized mesh chain: User A connects to B, B to C, C to D, and onwards across 50+, 100+ or unlimited phones. Messages hop continuously across the whole network!
-        </p>
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <button class="btn btn-sm btn-ble" onclick="initNativeBleMesh()">📡 Restart BLE Scan</button>
-          <button class="btn btn-sm btn-secondary" onclick="switchTab('screen-groups')">👥 Groups</button>
-        </div>
+        <button class="btn btn-sm btn-accent" style="width:auto;">Chat 💬</button>
       </div>
 
-      <div class="card">
-        <div class="card-title">📡 How Infinite Bluetooth Mesh Relaying Works:</div>
-        <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
-          <li><strong>Step 1: Open App on Phones:</strong> QuickChat turns on Native BLE radio and discovers all nearby phones in range.</li>
-          <li><strong>Step 2: Type Message:</strong> Send direct private message or broadcast in <strong>#Nearby-Public-Mesh</strong>.</li>
-          <li><strong>Step 3: Infinite Multi-Hop Chain Relay (A ➔ B ➔ C ➔ ... ➔ ♾️):</strong> Every intermediate phone forwards the radio packets across endless nodes without any 4-node limit.</li>
-          <li><strong>Step 4: Instant Sound & Delivery:</strong> Target phone chimes 🔔, vibrates, and confirms delivery receipt across the entire chain.</li>
-        </ol>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 10px;">
+        <div class="card-title" style="margin-bottom:0;">Mesh Groups (<span id="groupCountBadge">3</span>)</div>
+        <button class="btn btn-sm btn-accent" onclick="openCreateGroupModal()">
+          <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          + Create Group
+        </button>
+      </div>
+
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+        Groups propagate across all connected phones and stay saved permanently.
+      </p>
+
+      <div id="groupsListContainer">
+        <!-- Dynamically rendered group items -->
       </div>
     </section>
 
-    <!-- SCREEN 2: NEARBY RADAR & MESH TOPOLOGY -->
-    <section id="screen-nearby" class="screen active">
+    <!-- TAB 2: ACTIVE CONVERSATIONS (CHATS) -->
+    <section id="screen-chats" class="screen">
+      <div class="card-title" style="margin-bottom:12px;">Active Group Chats</div>
+      <div id="chatsListContainer">
+        <!-- Dynamically rendered active conversations -->
+      </div>
+    </section>
+
+    <!-- TAB 3: MESH RADAR & TOPOLOGY (DISCOVERED PHONES / RELAY NODES) -->
+    <section id="screen-nearby" class="screen">
       <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <div style="font-size:13px; font-weight:700;" id="myIdentityTitle">@username</div>
-          <div style="font-size:11px; color:var(--text-muted);">ID: <span id="myIdBadge" style="color:var(--primary); font-family:'JetBrains Mono', monospace;">...</span></div>
+          <div style="font-size:11px; color:var(--text-muted);">Node ID: <span id="myIdBadge" style="color:var(--primary); font-family:'JetBrains Mono', monospace;">...</span></div>
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
           <span class="live-dot"></span>
@@ -499,60 +504,89 @@
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:var(--text-muted);">
           <span>Packets Forwarded: <strong id="meshRelayCountStat" style="color:var(--accent);">0</strong></span>
-          <button class="btn btn-sm btn-ble" style="padding:4px 8px; font-size:11px;" onclick="initNativeBleMesh()">🔄 Bluetooth Rescan</button>
+          <button class="btn btn-sm btn-ble" style="padding:4px 8px; font-size:11px;" onclick="refreshBleDiscovery()">🔄 Bluetooth Rescan</button>
         </div>
-      </div>
-
-      <!-- Public Mesh Group Fast Banner -->
-      <div class="public-group-card" onclick="openChatRoom('group_nearby_public', '#Nearby-Public-Mesh', true)">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="peer-avatar group-avatar" style="width:44px; height:44px; font-size:18px;">📢</div>
-          <div>
-            <div style="font-weight:800; font-size:14px;">#Nearby-Public-Mesh</div>
-            <div style="font-size:11px; color:var(--text-muted);">Broadcasts across ALL connected mesh chain nodes</div>
-          </div>
-        </div>
-        <button class="btn btn-sm btn-accent" style="width:auto;">Chat 💬</button>
       </div>
 
       <div class="card-title" style="margin:16px 0 10px;">
-        <span>Discovered Mesh Nodes (<span id="peerCountLabel">0</span>)</span>
-        <button class="btn btn-sm btn-secondary" onclick="forceBroadcast()">🔄 Mesh Scan</button>
+        <span>Connected Mesh Nodes & Relays (<span id="peerCountLabel">0</span>)</span>
+        <button class="btn btn-sm btn-secondary" onclick="forceBroadcast()">🔄 Gossip Sync</button>
       </div>
 
       <div id="peersListContainer">
-        <!-- Dynamically rendered peer items -->
+        <!-- Dynamically rendered node relay items -->
       </div>
     </section>
 
-    <!-- SCREEN 3: COMMUNITIES & GROUPS -->
-    <section id="screen-groups" class="screen">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div class="card-title" style="margin-bottom:0;">Mesh Groups</div>
-        <button class="btn btn-sm btn-accent" onclick="openCreateGroupModal()">
-          <svg class="icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Create Group
+    <!-- TAB 4: USER PROFILE & SETTINGS -->
+    <section id="screen-profile" class="screen">
+      <div class="card" style="text-align:center;">
+        <div class="peer-avatar" style="width:60px; height:60px; font-size:24px; margin:0 auto 10px;" id="profileAvatar">U</div>
+        <div style="font-weight:800; font-size:16px;" id="profileDisplayName">User</div>
+        <div style="font-size:12px; color:var(--text-muted);" id="profileUsername">@user</div>
+        <div style="font-size:11px; color:var(--accent); margin-top:4px;" id="profileUserId">ID: ...</div>
+        <button class="btn btn-sm btn-ble" style="margin-top:12px; font-size:12px; padding:6px 14px; width:auto; display:inline-flex;" onclick="openOnboardingEditModal()">
+          ✏️ Change Username & Name
         </button>
       </div>
 
-      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-        Created groups stay saved permanently and sync across the entire multi-hop chain.
-      </p>
+      <div class="card">
+        <div class="card-title">Infinite Multi-Hop Chain Relay Node</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px; font-weight:700;">Mesh Relay Mode</div>
+            <div style="font-size:11px; color:var(--text-muted);">Route group packets across ∞ unlimited phone relays</div>
+          </div>
+          <button class="btn btn-sm btn-accent" id="toggleRelayBtn" onclick="toggleMeshRelay()">Enabled ✓</button>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); background:var(--surface-hi); padding:8px 12px; border-radius:10px;">
+          Total Packets Forwarded: <strong id="totalRelayedStat" style="color:var(--accent);">0</strong>
+        </div>
+      </div>
 
-      <div id="groupsListContainer">
-        <!-- Dynamically rendered group items -->
+      <div class="card">
+        <div class="card-title">Audio & Vibration Alerts</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <div>
+            <div style="font-size:13px; font-weight:700;">Audible Chime + Vibration</div>
+            <div style="font-size:11px; color:var(--text-muted);">Alerts actively on EVERY incoming group message</div>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="playMessageChime()">Test Chime 🔔</button>
+        </div>
       </div>
     </section>
 
-    <!-- SCREEN 4: ACTIVE CHATS -->
-    <section id="screen-chats" class="screen">
-      <div class="card-title" style="margin-bottom:12px;">Active Conversations</div>
-      <div id="chatsListContainer">
-        <!-- Dynamically rendered active conversations -->
+    <!-- TAB 5: ABOUT & GUIDE -->
+    <section id="screen-about" class="screen">
+      <div class="card" style="background:linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(124, 77, 255, 0.12)); border-color:rgba(0, 229, 255, 0.3);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <img src="./app_icon.png" style="width:40px; height:40px; border-radius:10px; object-fit:cover;">
+          <div>
+            <div style="font-weight:800; font-size:16px;">QuickChat Mesh Groups</div>
+            <div style="font-size:12px; color:var(--accent);">Zero-Internet Multi-Hop Bluetooth Broadcast</div>
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.4;">
+          QuickChat connects phones into an automatic mesh chain: Phone A connects to B, B to C, C to D. Group messages propagate instantly to all members without any cellular tower, internet, or SIM card needed!
+        </p>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn btn-sm btn-ble" onclick="refreshBleDiscovery()">📡 Bluetooth Scan</button>
+          <button class="btn btn-sm btn-accent" onclick="switchTab('screen-groups')">👥 View Groups</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📡 How Offline Mesh Group Chat Works:</div>
+        <ol style="font-size:13px; color:var(--text-muted); line-height:1.6; padding-left:18px;">
+          <li><strong>Step 1: Open App:</strong> Native BLE radio discovers all nearby phones in range.</li>
+          <li><strong>Step 2: Join or Create Group:</strong> Enter <strong>#Nearby-Public-Mesh</strong> or create a custom group.</li>
+          <li><strong>Step 3: Infinite Multi-Hop Relay:</strong> Packets hop through intermediate phones seamlessly.</li>
+          <li><strong>Step 4: Chime & Alert:</strong> Every phone chimes 🔔 and updates the chat in real-time.</li>
+        </ol>
       </div>
     </section>
 
-    <!-- SCREEN 5: REAL-TIME CHAT ROOM -->
+    <!-- REAL-TIME GROUP CHAT ROOM SCREEN -->
     <section id="screen-chatroom" class="screen">
       <div class="chat-container">
         <div class="chat-header-bar">
@@ -573,7 +607,7 @@
         </div>
 
         <div class="chat-input-row">
-          <input type="text" id="messageInput" class="input-field" placeholder="Type message for the mesh..." onkeydown="if(event.key==='Enter') sendMessage()">
+          <input type="text" id="messageInput" class="input-field" placeholder="Type message for the group..." onkeydown="if(event.key==='Enter') sendMessage()">
           <button class="btn btn-sm btn-accent" style="width:auto; padding:0 18px;" onclick="sendMessage()">
             <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
@@ -581,55 +615,9 @@
       </div>
     </section>
 
-    <!-- SCREEN 6: USER PROFILE & SETTINGS -->
-    <section id="screen-profile" class="screen">
-      <div class="card" style="text-align:center;">
-        <div class="peer-avatar" style="width:60px; height:60px; font-size:24px; margin:0 auto 10px;" id="profileAvatar">U</div>
-        <div style="font-weight:800; font-size:16px;" id="profileDisplayName">User</div>
-        <div style="font-size:12px; color:var(--text-muted);" id="profileUsername">@user</div>
-        <div style="font-size:11px; color:var(--accent); margin-top:4px;" id="profileUserId">ID: ...</div>
-        <button class="btn btn-sm btn-ble" style="margin-top:12px; font-size:12px; padding:6px 14px; width:auto; display:inline-flex;" onclick="openOnboardingEditModal()">
-          ✏️ Change Username & Name
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Infinite Multi-Hop Chain Relay Node</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div>
-            <div style="font-size:13px; font-weight:700;">Mesh Relay Mode</div>
-            <div style="font-size:11px; color:var(--text-muted);">Route packets across ∞ unlimited multi-hop phone relays</div>
-          </div>
-          <button class="btn btn-sm btn-accent" id="toggleRelayBtn" onclick="toggleMeshRelay()">Enabled ✓</button>
-        </div>
-        <div style="font-size:11px; color:var(--text-muted); background:var(--surface-hi); padding:8px 12px; border-radius:10px;">
-          Total Packets Forwarded: <strong id="totalRelayedStat" style="color:var(--accent);">0</strong>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Audio & Vibration Alerts</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-          <div>
-            <div style="font-size:13px; font-weight:700;">Audible Chime + Vibration</div>
-            <div style="font-size:11px; color:var(--text-muted);">Alerts actively on EVERY incoming message</div>
-          </div>
-          <button class="btn btn-sm btn-outline" onclick="playMessageChime()">Test Chime 🔔</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bottom Navigation Bar -->
+    <!-- Bottom Navigation Bar (100% Group-Focused) -->
     <nav class="bottom-nav">
-      <button class="nav-btn" onclick="switchTab('screen-about', this)">
-        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>About</span>
-      </button>
-      <button class="nav-btn active" onclick="switchTab('screen-nearby', this)">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
-        <span>Nearby</span>
-      </button>
-      <button class="nav-btn" onclick="switchTab('screen-groups', this)">
+      <button class="nav-btn active" onclick="switchTab('screen-groups', this)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Groups</span>
       </button>
@@ -638,9 +626,17 @@
         <span>Chats</span>
         <span class="nav-badge" id="chatsUnreadBadge">0</span>
       </button>
+      <button class="nav-btn" onclick="switchTab('screen-nearby', this)">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
+        <span>Mesh Radar</span>
+      </button>
       <button class="nav-btn" onclick="switchTab('screen-profile', this)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>Profile</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('screen-about', this)">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>About</span>
       </button>
     </nav>
   </div>
@@ -653,14 +649,14 @@
         <button class="btn btn-sm btn-secondary" onclick="closeCreateGroupModal()">✕</button>
       </div>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
-        New groups stay saved permanently and automatically propagate across the multi-hop chain!
+        This group will be broadcasted to all nearby phones and stays saved permanently!
       </p>
 
       <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">GROUP NAME</label>
-      <input type="text" id="newGroupName" class="input-field" placeholder="e.g. Mountain Trekking Squad">
+      <input type="text" id="newGroupName" class="input-field" placeholder="e.g. Mountain Squad">
 
       <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">DESCRIPTION</label>
-      <input type="text" id="newGroupDesc" class="input-field" placeholder="e.g. Offline chat for our team">
+      <input type="text" id="newGroupDesc" class="input-field" placeholder="e.g. Offline chat for our trip">
 
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button class="btn btn-secondary" onclick="closeCreateGroupModal()">Cancel</button>
@@ -668,11 +664,10 @@
       </div>
     </div>
   </div>
-  <!-- SCREEN NAVIGATION END -->
 
   <script>
     // ----------------------------------------------------
-    // SERVERLESS WEBRTC DATACHANNEL MESH ENGINE (A ➔ B ➔ C ➔ D)
+    // QUICKCHAT GROUP MESH ENGINE (100% GROUP FOCUS)
     // ----------------------------------------------------
     const MQTT_BROKER_HOST = 'broker.emqx.io';
     const MQTT_BROKER_PORT = 8084;
@@ -681,28 +676,22 @@
     let mqttClient = null;
     let localBroadcastChannel = null;
     let currentUser = null;
-    let activeChatId = null;
+    let activeChatId = 'group_nearby_public';
     let toastTargetId = null;
     let unreadCount = 0;
     let isMeshRelayEnabled = true;
     let totalRelayedCount = 0;
-    let qrScanner = null;
 
-    // ACTIVE P2P WEBRTC DATACHANNELS (Works 100% Offline with zero internet)
-    let activeWebRtcChannels = new Map(); // peerId -> { peerConnection, dataChannel, peerInfo }
-    let pendingPeerConnection = null;
-    let pendingDataChannel = null;
-
-    // Mesh routing table
+    // Active BLE & Mesh Nodes
     let seenPacketIds = new Set();
-    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, publicKey, isOnline, hopsAway }
-    let directMeshLinks = new Map(); // peerId -> { id, displayName, type: 'webrtc'|'local'|'ble' }
+    let discoveredPeers = new Map(); // peerId -> { id, username, displayName, lastSeen, isOnline, hopsAway }
+    let directMeshLinks = new Map(); // peerId -> { id, displayName, type: 'ble' }
 
     // DEFAULT ACTIVE PUBLIC MESH GROUPS
     const defaultGroups = [
-      { id: 'group_nearby_public', name: '#Nearby-Public-Mesh', desc: '📢 Multi-Hop chain broadcast for all connected nodes', members: 48 },
-      { id: 'group_trek_sos', name: '#Trek-Emergency-SOS', desc: '⛰️ High-priority SOS broadcast for remote areas', members: 12 },
-      { id: 'group_campus_hub', name: '#Campus-Hub', desc: '🎓 Decentralized mesh chain meetup', members: 26 }
+      { id: 'group_nearby_public', name: '#Nearby-Public-Mesh', desc: '📢 Multi-Hop chain broadcast for all connected nodes', members: 'All Nodes' },
+      { id: 'group_trek_sos', name: '#Trek-Emergency-SOS', desc: '⛰️ High-priority SOS broadcast for remote areas', members: 'Offline' },
+      { id: 'group_campus_hub', name: '#Campus-Hub', desc: '🎓 Decentralized mesh chain community', members: 'Community' }
     ];
     let groupsList = [];
     let chatHistories = {};
@@ -732,10 +721,10 @@
       } catch (e) {}
     }
 
-    function showToastNotification(senderName, text, targetId) {
+    function showToastNotification(groupName, text, targetId) {
       toastTargetId = targetId;
-      document.getElementById('toastAvatar').innerText = senderName.charAt(0).toUpperCase();
-      document.getElementById('toastTitle').innerText = senderName;
+      document.getElementById('toastAvatar').innerText = '👥';
+      document.getElementById('toastTitle').innerText = groupName;
       document.getElementById('toastBody').innerText = text.length > 35 ? text.substring(0, 35) + '...' : text;
 
       const toast = document.getElementById('notificationToast');
@@ -743,7 +732,7 @@
       setTimeout(() => toast.classList.remove('show'), 4000);
 
       if (window.Notification && Notification.permission === 'granted') {
-        new Notification(senderName + ' (QuickChat)', {
+        new Notification(groupName + ' (QuickChat)', {
           body: text,
           icon: './app_icon.png'
         });
@@ -752,9 +741,9 @@
 
     function onToastClicked() {
       if (toastTargetId) {
-        const isGroup = toastTargetId.startsWith('group_');
-        const title = isGroup ? (groupsList.find(g => g.id === toastTargetId)?.name || 'Group') : (discoveredPeers.get(toastTargetId)?.displayName || 'Direct Chat');
-        openChatRoom(toastTargetId, title, isGroup);
+        const group = groupsList.find(g => g.id === toastTargetId);
+        const title = group ? group.name : '#Nearby-Public-Mesh';
+        openChatRoom(toastTargetId, title, true);
       }
       document.getElementById('notificationToast').classList.remove('show');
     }
@@ -766,7 +755,7 @@
       if (isMeshRelayEnabled) {
         btn.innerText = 'Enabled ✓';
         btn.className = 'btn btn-sm btn-accent';
-        showToastNotification('QuickChat', '🔄 Multi-Hop Mesh Relay Node Active! Routing packets across chain.');
+        showToastNotification('QuickChat', '🔄 Multi-Hop Mesh Relay Node Active! Routing group packets across chain.', 'group_nearby_public');
       } else {
         btn.innerText = 'Disabled ✕';
         btn.className = 'btn btn-sm btn-secondary';
@@ -789,11 +778,8 @@
           map.set(key, peer);
         } else {
           const existing = map.get(key);
-          // Prefer real usr_ id over temporary ble_ id
           if (existing.id.startsWith('ble_') && !peer.id.startsWith('ble_')) {
             map.set(key, { ...existing, ...peer, id: peer.id });
-          } else if (existing.username === 'ble_node' && peer.username && peer.username !== 'ble_node') {
-            map.set(key, { ...existing, ...peer });
           } else if ((peer.hopsAway || 1) < (existing.hopsAway || 1)) {
             map.set(key, { ...existing, ...peer });
           }
@@ -806,16 +792,6 @@
       if (!relayBuffer.some(e => e.messageId === envelope.messageId)) {
         relayBuffer.push(envelope);
         if (relayBuffer.length > 200) relayBuffer.shift();
-      }
-    }
-
-    function flushRelayBufferToPeer(peerId) {
-      const match = relayBuffer.filter(e => e.destinationId === peerId || e.destinationId.startsWith('group_'));
-      for (const env of match) {
-        transmitPacket({
-          type: 'P2P_MESSAGE',
-          envelope: env
-        });
       }
     }
 
@@ -847,7 +823,6 @@
       loadStoredChats();
       loadStoredGroups();
       loadCachedPeers();
-      loadDirectMeshLinks();
       initLocalBroadcast();
       initStorageEventListener();
       initGlobalMqttRelay();
@@ -857,8 +832,8 @@
       renderPeersList();
       renderMeshChainVisualizer();
 
-      const lastTab = localStorage.getItem('qc_active_tab') || 'screen-nearby';
-      switchTab(lastTab);
+      const lastTab = localStorage.getItem('qc_active_tab') || 'screen-groups';
+      switchTab(lastTab === 'screen-chatroom' ? 'screen-groups' : lastTab);
     });
 
     // 5.1 Native Android BLE Mesh Radio Integration
@@ -881,14 +856,12 @@
 
           nativeBleMesh.addListener('onPeerDiscovered', (peerData) => {
             console.log('[Native BLE] Discovered Android BLE Node:', peerData);
-            const rawName = peerData.name || 'Nearby BLE Phone';
+            const rawName = peerData.name || 'Nearby Phone';
 
-            // If we already have this user registered under their real ID, just refresh online state
             const existingPeer = Array.from(discoveredPeers.values()).find(p => p.displayName === rawName);
             if (existingPeer) {
               existingPeer.lastSeen = Date.now();
               existingPeer.isOnline = true;
-              existingPeer.isDirectLink = true;
               directMeshLinks.set(existingPeer.id, { id: existingPeer.id, displayName: rawName, type: 'ble' });
               saveCachedPeers();
               renderPeersList();
@@ -901,10 +874,8 @@
               id: peerId,
               username: 'ble_node',
               displayName: rawName,
-              publicKey: 'ble_key',
               lastSeen: Date.now(),
               isOnline: true,
-              isDirectLink: true,
               hopsAway: 1
             });
             directMeshLinks.set(peerId, { id: peerId, displayName: rawName, type: 'ble' });
@@ -922,7 +893,6 @@
           });
 
           document.getElementById('headerStatusText').innerText = 'BLE MESH ACTIVE ⚡';
-          showToastNotification('Native BLE Radio', '📡 Real Android Bluetooth Mesh Radio Active!');
         } catch (err) {
           console.warn('Native BLE radio error:', err);
         }
@@ -1008,13 +978,12 @@
           currentUser = JSON.parse(stored);
           updateIdentityUI();
           initNativeBleMesh();
-          const lastTab = localStorage.getItem('qc_active_tab') || 'screen-nearby';
-          switchTab(lastTab === 'onboardingView' ? 'screen-nearby' : lastTab);
+          const lastTab = localStorage.getItem('qc_active_tab') || 'screen-groups';
+          switchTab(lastTab === 'onboardingView' ? 'screen-groups' : lastTab);
         } catch (_) {
           showOnboardingScreen();
         }
       } else {
-        // First install / first launch: Ask user to choose or type username!
         showOnboardingScreen();
       }
     }
@@ -1025,13 +994,11 @@
       if (!u) u = d.toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'user_' + Math.floor(Math.random() * 899 + 100);
 
       const userId = (currentUser && currentUser.id) ? currentUser.id : ('usr_' + Math.random().toString(16).substring(2, 8).toUpperCase());
-      const pubKey = (currentUser && currentUser.publicKey) ? currentUser.publicKey : ('pub_key_' + Math.random().toString(36).substring(2, 12));
 
       currentUser = {
         id: userId,
         username: u,
         displayName: d,
-        publicKey: pubKey,
         createdAt: currentUser ? currentUser.createdAt : Date.now()
       };
 
@@ -1044,8 +1011,8 @@
         Notification.requestPermission();
       }
 
-      showToastNotification('QuickChat Profile', `👋 Identity set to @${u} (${d})`);
-      switchTab('screen-nearby');
+      showToastNotification('QuickChat Profile', `👋 Identity set to @${u} (${d})`, 'group_nearby_public');
+      switchTab('screen-groups');
     }
 
     function updateIdentityUI() {
@@ -1100,7 +1067,7 @@
       } catch (e) {}
     }
 
-    // 7. Local BroadcastChannel & Storage Event Listeners (For same-device / multi-tab)
+    // 7. Local BroadcastChannel & Storage Event Listeners
     function initLocalBroadcast() {
       try {
         localBroadcastChannel = new BroadcastChannel('quickchat_p2p_mesh_v2');
@@ -1121,7 +1088,7 @@
       });
     }
 
-    // 8. 4-SECOND AUTOMATIC BACKGROUND DISCOVERY LOOP
+    // 8. Background Discovery Loop
     function startRealtimeDiscoveryLoop() {
       setInterval(() => {
         if (!currentUser) return;
@@ -1134,6 +1101,7 @@
       broadcastPresence();
       renderPeersList();
       renderMeshChainVisualizer();
+      showToastNotification('QuickChat', '📡 Synced mesh groups and nodes with nearby phones.', 'group_nearby_public');
     }
 
     function broadcastPresence() {
@@ -1143,7 +1111,6 @@
         id: p.id,
         username: p.username,
         displayName: p.displayName,
-        publicKey: p.publicKey,
         hopsAway: p.hopsAway || 1
       }));
 
@@ -1154,7 +1121,6 @@
           id: currentUser.id,
           username: currentUser.username,
           displayName: currentUser.displayName,
-          publicKey: currentUser.publicKey,
           lastSeen: Date.now()
         },
         knownPeers: gossipPeers,
@@ -1165,30 +1131,18 @@
       transmitPacket(presencePacket);
     }
 
-    // 9. CENTRAL PACKET TRANSMITTER OVER LIVE WEBRTC DATACHANNELS + ALL MESH LINKS
+    // 9. CENTRAL PACKET TRANSMITTER
     function transmitPacket(packet) {
       const json = JSON.stringify(packet);
 
-      // 0. TRANSMIT OVER REAL NATIVE ANDROID BLUETOOTH BLE RADIO (ZERO-INTERNET / ZERO-HOTSPOT!)
+      // 0. TRANSMIT OVER REAL NATIVE ANDROID BLUETOOTH BLE RADIO
       if (nativeBleMesh) {
         try {
           nativeBleMesh.broadcastBlePacket({ packetJson: json });
         } catch (_) {}
       }
 
-      // 1. TRANSMIT ACROSS ALL DIRECT OFFLINE WEBRTC DATACHANNELS (WORKS 100% OFFLINE!)
-      for (const [peerId, entry] of activeWebRtcChannels.entries()) {
-        if (entry.dataChannel && entry.dataChannel.readyState === 'open') {
-          try {
-            entry.dataChannel.send(json);
-            console.log('[WebRTC Mesh] Packet sent over DataChannel to:', peerId);
-          } catch (err) {
-            console.warn('DataChannel send error:', err);
-          }
-        }
-      }
-
-      // 2. MQTT Online WSS Relay (if internet available)
+      // 1. MQTT Online WSS Relay (if internet available)
       if (mqttClient && mqttClient.isConnected()) {
         try {
           const msg = new Paho.MQTT.Message(json);
@@ -1197,18 +1151,18 @@
         } catch (_) {}
       }
 
-      // 3. Local BroadcastChannel
+      // 2. Local BroadcastChannel
       if (localBroadcastChannel) {
         try { localBroadcastChannel.postMessage(packet); } catch (_) {}
       }
 
-      // 4. Storage Event Trigger
+      // 3. Storage Event Trigger
       try {
         localStorage.setItem('qc_raw_mesh_packet', json);
       } catch (_) {}
     }
 
-    // 10. MULTI-HOP MESH CHAIN ROUTER (A ➔ B ➔ C ➔ D ➔ E ...)
+    // 10. MULTI-HOP GROUP MESH ROUTER (A ➔ B ➔ C ➔ D ...)
     function handleIncomingPacket(packet) {
       if (!packet || !currentUser) return;
 
@@ -1222,61 +1176,35 @@
         }
       }
 
-      // Heartbeat Peer Discovery & Gossip Multi-Hop Topology Synchronization
+      // Heartbeat Peer Discovery & Gossip Group Sync
       if (packet.type === 'PEER_HEARTBEAT') {
         const peer = packet.peer;
         if (peer && peer.id !== currentUser.id) {
-          const isDirect = directMeshLinks.has(peer.id) || activeWebRtcChannels.has(peer.id) || (packet.hops || 1) === 1;
-
-          // Remove any temporary ble_ entry matching this displayName to guarantee zero duplicates
-          for (const [oldId, oldPeer] of discoveredPeers.entries()) {
-            if (oldId.startsWith('ble_') && oldPeer.displayName === peer.displayName && oldId !== peer.id) {
-              discoveredPeers.delete(oldId);
-              directMeshLinks.delete(oldId);
-              if (chatHistories[oldId] && !chatHistories[peer.id]) {
-                chatHistories[peer.id] = chatHistories[oldId];
-                delete chatHistories[oldId];
-              }
-              if (unreadCountsByChat[oldId]) {
-                unreadCountsByChat[peer.id] = (unreadCountsByChat[peer.id] || 0) + unreadCountsByChat[oldId];
-                delete unreadCountsByChat[oldId];
-              }
-            }
-          }
-
           discoveredPeers.set(peer.id, {
             ...peer,
             lastSeen: Date.now(),
             isOnline: true,
-            isDirectLink: isDirect,
-            hopsAway: packet.hops || (isDirect ? 1 : 2)
+            hopsAway: packet.hops || 1
           });
-          if (isDirect) {
-            directMeshLinks.set(peer.id, { id: peer.id, displayName: peer.displayName, type: 'ble' });
-          }
+          directMeshLinks.set(peer.id, { id: peer.id, displayName: peer.displayName, type: 'ble' });
         }
 
-        // GOSSIP ROUTING TABLE: Ingest all distant mesh nodes known by this phone!
+        // Ingest distant mesh nodes
         if (packet.knownPeers && Array.isArray(packet.knownPeers)) {
           for (const remotePeer of packet.knownPeers) {
             if (remotePeer && remotePeer.id !== currentUser.id && (!peer || remotePeer.id !== peer.id)) {
-              const existing = discoveredPeers.get(remotePeer.id);
               const incomingHops = (remotePeer.hopsAway || 1) + 1;
-              if (!existing || incomingHops < (existing.hopsAway || 99) || (Date.now() - (existing.lastSeen || 0) > 15000)) {
-                discoveredPeers.set(remotePeer.id, {
-                  ...remotePeer,
-                  lastSeen: Date.now(),
-                  isOnline: true,
-                  isDirectLink: false,
-                  hopsAway: incomingHops,
-                  relayNode: peer ? peer.displayName : 'Mesh Relay'
-                });
-              }
+              discoveredPeers.set(remotePeer.id, {
+                ...remotePeer,
+                lastSeen: Date.now(),
+                isOnline: true,
+                hopsAway: incomingHops
+              });
             }
           }
         }
 
-        // Auto-sync discovered groups across the mesh
+        // Auto-sync discovered groups across all nodes
         if (packet.knownGroups && Array.isArray(packet.knownGroups)) {
           let updated = false;
           for (const g of packet.knownGroups) {
@@ -1294,84 +1222,60 @@
         saveCachedPeers();
         renderPeersList();
         renderMeshChainVisualizer();
-        if (peer) flushRelayBufferToPeer(peer.id);
       }
 
       // Group Broadcast Created (Propagates to all nearby devices)
       if (packet.type === 'NEW_GROUP_BROADCAST') {
         const group = packet.group;
-        if (!groupsList.some(g => g.id === group.id)) {
+        if (group && !groupsList.some(g => g.id === group.id)) {
           groupsList.push(group);
           saveCustomGroups();
           renderGroupsList();
-          showToastNotification('QuickChat', `👥 New Mesh Group Discovered: ${group.name}`);
+          showToastNotification('New Mesh Group', `👥 ${group.name} was created!`, group.id);
         }
       }
 
-      // Direct or Group Message Packet with Multi-Hop Chain Forwarding (A ➔ B ➔ C ➔ D ➔ E)
+      // Group Message Packet with Multi-Hop Chain Forwarding (A ➔ B ➔ C ➔ D ...)
       if (packet.type === 'P2P_MESSAGE') {
         const envelope = packet.envelope;
         if (!envelope) return;
 
-        const isGroupMsg = envelope.destinationId === 'broadcast' || 
-                           envelope.destinationId === 'group_nearby_public' || 
-                           envelope.destinationId.startsWith('group_');
+        // Group destination ID (e.g. 'group_nearby_public' or 'group_*')
+        const groupId = envelope.destinationId || 'group_nearby_public';
 
-        // Direct 1-to-1 message is ONLY for ME if destination matches MY unique ID or MY username
-        const isForMe = isGroupMsg || 
-                        envelope.destinationId === currentUser.id || 
-                        envelope.destinationId === currentUser.username;
+        // Deliver if it is from someone else
+        if (envelope.senderId !== currentUser.id) {
+          onGroupMessageReceived(envelope, groupId);
+        }
 
-        // Case A: If it's a Group message OR direct message meant specifically for ME -> Deliver!
-        if (isForMe) {
-          if (envelope.senderId !== currentUser.id) {
-            onMessageReceived(envelope, isGroupMsg);
-          }
-        } 
-        
-        // Case B: Truly Infinite Multi-Hop Mesh Forwarding Loop (A ➔ B ➔ C ➔ D ➔ E ... ➔ ∞)
+        // Multi-Hop Relay Loop: Forward to all neighboring nodes
         if (isMeshRelayEnabled && envelope.senderId !== currentUser.id) {
           const routeHistory = envelope.routeHistory || [envelope.senderId];
-          // Loopback Protection: Forward to next nodes if this phone hasn't already relayed it
           if (!routeHistory.includes(currentUser.id)) {
-            // Forward if message was for someone else (direct 1-to-1 relay) OR if it's a group broadcast
-            if (!isForMe || isGroupMsg) {
-              const hopsCount = (envelope.hops || 0) + 1;
-              const relayedEnvelope = {
-                ...envelope,
-                hops: hopsCount,
-                relayedBy: currentUser.id,
-                routeHistory: [...routeHistory, currentUser.id]
-              };
+            const hopsCount = (envelope.hops || 0) + 1;
+            const relayedEnvelope = {
+              ...envelope,
+              hops: hopsCount,
+              relayedBy: currentUser.id,
+              routeHistory: [...routeHistory, currentUser.id]
+            };
 
-              totalRelayedCount++;
-              const counterEl = document.getElementById('meshRelayCountStat');
-              if (counterEl) counterEl.innerText = totalRelayedCount;
-              const stat = document.getElementById('totalRelayedStat');
-              if (stat) stat.innerText = totalRelayedCount;
+            totalRelayedCount++;
+            const counterEl = document.getElementById('meshRelayCountStat');
+            if (counterEl) counterEl.innerText = totalRelayedCount;
+            const stat = document.getElementById('totalRelayedStat');
+            if (stat) stat.innerText = totalRelayedCount;
 
-              storeInRelayBuffer(relayedEnvelope);
+            storeInRelayBuffer(relayedEnvelope);
 
-              // Jittered multi-hop forwarding to prevent collision
-              setTimeout(() => {
-                transmitPacket({
-                  type: 'P2P_MESSAGE',
-                  packetId: 'hop_' + relayedEnvelope.messageId + '_' + hopsCount + '_' + Math.random().toString(36).substring(2, 6),
-                  envelope: relayedEnvelope
-                });
-              }, Math.random() * 120 + 30);
-            }
+            setTimeout(() => {
+              transmitPacket({
+                type: 'P2P_MESSAGE',
+                packetId: 'hop_' + relayedEnvelope.messageId + '_' + hopsCount + '_' + Math.random().toString(36).substring(2, 6),
+                envelope: relayedEnvelope
+              });
+            }, Math.random() * 120 + 30);
           }
-        }
-      }
-
-      // Delivery Receipt (ACK) across the chain
-      if (packet.type === 'MESSAGE_ACK') {
-        const { messageId, recipientId, destinationId } = packet;
-        onMessageAckReceived(messageId, recipientId);
-
-        if (isMeshRelayEnabled && destinationId && destinationId !== currentUser.id) {
-          setTimeout(() => transmitPacket(packet), 40);
         }
       }
 
@@ -1388,10 +1292,9 @@
             renderChatMessages();
           }
           updateChatsList();
-          showToastNotification('QuickChat', `🧹 Group chat was cleared by Admin (${clearedBy || 'Creator'})`);
+          showToastNotification('QuickChat', `🧹 Group chat was cleared by Admin (${clearedBy || 'Creator'})`, groupId);
         }
 
-        // Multi-hop relay clear broadcast across the chain
         if (isMeshRelayEnabled && adminId !== (currentUser ? currentUser.id : '')) {
           setTimeout(() => transmitPacket(packet), 40);
         }
@@ -1434,31 +1337,14 @@
       }
     }
 
-    function saveDirectMeshLinks() {
-      const arr = Array.from(directMeshLinks.values());
-      localStorage.setItem('qc_direct_mesh_links', JSON.stringify(arr));
-    }
-
-    function loadDirectMeshLinks() {
-      const raw = localStorage.getItem('qc_direct_mesh_links');
-      if (raw) {
-        try {
-          const arr = JSON.parse(raw);
-          for (const l of arr) {
-            directMeshLinks.set(l.id, l);
-          }
-        } catch (_) {}
-      }
-    }
-
-    // 11. Render Peers List & Live Chain Visualizer
+    // 11. Render Mesh Radar & Live Chain Visualizer
     function renderMeshChainVisualizer() {
       const container = document.getElementById('meshChainVisualizerBox');
       const countBadge = document.getElementById('activeLinksCountBadge');
       const uniquePeers = getUniqueDistinctPeers();
       
       const directCount = directMeshLinks.size;
-      countBadge.innerText = `${directCount} Direct Links • ${uniquePeers.length} Mesh Nodes Connected`;
+      countBadge.innerText = `${directCount} BLE Links • ${uniquePeers.length} Mesh Nodes Connected`;
 
       if (uniquePeers.length === 0 && directCount === 0) {
         container.innerHTML = `
@@ -1469,7 +1355,7 @@
           </div>
           <div class="mesh-chain-link" style="flex-shrink:0;">➔➔</div>
           <div class="mesh-chain-node" style="color:var(--secondary); border-color:var(--secondary); flex-shrink:0; font-weight:800;">
-            ♾️ Unlimited Mesh Chain
+            ♾️ Unlimited Mesh Groups
           </div>
         `;
         return;
@@ -1506,7 +1392,7 @@
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/></svg>
             <div class="empty-title">Scanning for Bluetooth Mesh Nodes...</div>
             <div class="empty-desc">
-              Make sure Bluetooth is ON on nearby phones. Join <strong>#Nearby-Public-Mesh</strong> to broadcast across all nodes.
+              Nearby phones running QuickChat will appear here and automatically route group messages.
             </div>
           </div>
         `;
@@ -1515,30 +1401,27 @@
 
       let html = '';
       for (const peer of uniquePeers) {
-        const isOnline = peer.isOnline !== false;
-        const unread = unreadCountsByChat[peer.id] || 0;
         const isMultiHop = (peer.hopsAway || 1) > 1;
         const hopsBadge = isMultiHop ? `<span style="color:var(--secondary); font-weight:bold;">⚡ ${peer.hopsAway} Hops Relay</span>` : `<span style="color:var(--accent); font-weight:bold;">⚡ Direct Radio Link</span>`;
 
         html += `
-          <div class="peer-item ${unread > 0 ? 'has-unread' : ''}">
+          <div class="peer-item">
             <div class="peer-item-left">
-              <div class="peer-avatar ble-avatar ${unread > 0 ? 'unread-avatar-glow' : ''}">${peer.displayName.charAt(0).toUpperCase()}</div>
+              <div class="peer-avatar ble-avatar">${peer.displayName.charAt(0).toUpperCase()}</div>
               <div>
-                <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}">
-                  ${peer.displayName} ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
+                <div class="peer-name">
+                  ${peer.displayName}
                 </div>
                 <div class="peer-sub">
                   <span class="live-dot" style="width:6px; height:6px;"></span>
-                  @${peer.username || 'user'} • ${hopsBadge}
+                  @${peer.username || 'node'} • ${hopsBadge}
                 </div>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-              ${unread > 0 ? `<div class="unread-counter-badge">${unread}</div>` : ''}
-              <button class="btn btn-sm btn-accent" onclick="openChatRoom('${peer.id}', '${peer.displayName.replace(/'/g, "\\'")}', false)">
-                Message
-              </button>
+              <span style="font-size:11px; color:var(--accent); font-weight:700; background:rgba(0, 245, 155, 0.1); padding:4px 8px; border-radius:6px;">
+                🟢 Active Relay
+              </span>
             </div>
           </div>
         `;
@@ -1546,7 +1429,12 @@
       container.innerHTML = html;
     }
 
-    // 12. Permanent Group Creation & Persistence (NEVER DELETED ON REFRESH)
+    function generateGroupId(name) {
+      const clean = (name || '').trim().toLowerCase().replace(/^#+/, '').replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+      return 'group_' + (clean || 'general');
+    }
+
+    // 12. Permanent Group Creation & Persistence
     function openCreateGroupModal() {
       document.getElementById('createGroupModal').classList.add('active');
     }
@@ -1555,24 +1443,30 @@
     }
 
     function createNewGroup() {
-      const name = document.getElementById('newGroupName').value.trim();
-      const desc = document.getElementById('newGroupDesc').value.trim() || 'P2P Mesh Community';
-      if (!name || !currentUser) return;
+      const rawName = document.getElementById('newGroupName').value.trim();
+      const desc = document.getElementById('newGroupDesc').value.trim() || 'Offline Mesh Community';
+      if (!rawName || !currentUser) return;
 
-      const groupId = 'group_' + Date.now().toString(36);
-      const newGroup = {
-        id: groupId,
-        name: name,
-        desc: desc,
-        creatorId: currentUser.id,
-        creatorName: currentUser.displayName,
-        creatorUsername: currentUser.username,
-        createdAt: Date.now(),
-        members: 1
-      };
+      const formattedName = rawName.startsWith('#') ? rawName : '#' + rawName;
+      const groupId = generateGroupId(formattedName);
 
-      groupsList.push(newGroup);
-      saveCustomGroups();
+      // Check if group already exists
+      let newGroup = groupsList.find(g => g.id === groupId);
+      if (!newGroup) {
+        newGroup = {
+          id: groupId,
+          name: formattedName,
+          desc: desc,
+          creatorId: currentUser.id,
+          creatorName: currentUser.displayName,
+          creatorUsername: currentUser.username,
+          createdAt: Date.now(),
+          members: 'Broadcast'
+        };
+        groupsList.push(newGroup);
+        saveCustomGroups();
+      }
+
       closeCreateGroupModal();
       document.getElementById('newGroupName').value = '';
       document.getElementById('newGroupDesc').value = '';
@@ -1584,7 +1478,7 @@
         group: newGroup
       });
 
-      openChatRoom(groupId, name, true);
+      openChatRoom(groupId, formattedName, true);
     }
 
     function saveCustomGroups() {
@@ -1617,9 +1511,9 @@
           if (cid.startsWith('group_') && !groupsList.some(g => g.id === cid)) {
             groupsList.push({
               id: cid,
-              name: '#' + cid.replace('group_', ''),
+              name: cid === 'group_nearby_public' ? '#Nearby-Public-Mesh' : ('#' + cid.replace('group_', '').replace(/_/g, '-')),
               desc: 'Active Mesh Group',
-              members: 1
+              members: 'Active'
             });
           }
         }
@@ -1628,6 +1522,9 @@
 
     function renderGroupsList() {
       const container = document.getElementById('groupsListContainer');
+      const badge = document.getElementById('groupCountBadge');
+      if (badge) badge.innerText = groupsList.length;
+
       let html = '';
       for (const group of groupsList) {
         const isDefault = defaultGroups.some(d => d.id === group.id);
@@ -1651,7 +1548,7 @@
             <div style="display:flex; align-items:center; gap:8px;">
               ${unread > 0 ? `<div class="unread-counter-badge">${unread}</div>` : ''}
               <button class="btn btn-sm btn-violet" style="width:auto; padding:0 14px;" onclick="event.stopPropagation(); openChatRoom('${group.id}', '${group.name.replace(/'/g, "\\'")}', true)">
-                Join Chat
+                Open
               </button>
             </div>
           </div>
@@ -1660,42 +1557,36 @@
       container.innerHTML = html;
     }
 
-    // 13. Real Message Sending & Receiving Across the Chain
+    // 13. Real Group Message Sending & Receiving
     function refreshTotalUnreadCount() {
       unreadCount = Object.values(unreadCountsByChat).reduce((sum, c) => sum + (Number(c) || 0), 0);
       updateUnreadBadge();
     }
 
-    function openChatRoom(targetId, targetName, isGroup) {
-      activeChatId = targetId;
-      unreadCountsByChat[targetId] = 0;
+    function openChatRoom(groupId, groupName, isGroup) {
+      activeChatId = groupId || 'group_nearby_public';
+      unreadCountsByChat[activeChatId] = 0;
       localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
       refreshTotalUnreadCount();
 
-      document.getElementById('chatTargetName').innerText = targetName;
+      const group = groupsList.find(g => g.id === activeChatId);
+      const title = group ? group.name : (groupName || (activeChatId === 'group_nearby_public' ? '#Nearby-Public-Mesh' : '#' + activeChatId.replace('group_', '').replace(/_/g, '-')));
+      document.getElementById('chatTargetName').innerText = title;
+
+      const isAdmin = group && group.creatorId && group.creatorId === (currentUser ? currentUser.id : '');
+      const adminLabel = (group && group.creatorName) ? ` • Admin: ${group.creatorName}` : '';
+      document.getElementById('chatTargetSub').innerText = '● Multi-Hop BLE Broadcast' + (isAdmin ? ' (👑 You are Admin)' : adminLabel);
+
       const actionContainer = document.getElementById('chatActionBtnContainer');
-
-      if (isGroup) {
-        const group = groupsList.find(g => g.id === targetId);
-        const isAdmin = group && group.creatorId && group.creatorId === (currentUser ? currentUser.id : '');
-        const adminLabel = (group && group.creatorName) ? ` • Admin: ${group.creatorName}` : '';
-        
-        document.getElementById('chatTargetSub').innerText = '● Multi-Hop BLE Broadcast' + (isAdmin ? ' (👑 You are Admin)' : adminLabel);
-
-        if (isAdmin) {
-          actionContainer.innerHTML = `<button class="btn btn-sm btn-danger" style="background:linear-gradient(135deg, #ef4444, #b91c1c); color:#fff; border:none; padding:5px 12px; font-size:11px; border-radius:8px; font-weight:700; box-shadow:0 0 10px rgba(239,68,68,0.3);" onclick="clearCurrentChat()">Clear (Admin) 🗑️</button>`;
-        } else {
-          actionContainer.innerHTML = `<span style="font-size:10.5px; color:var(--text-muted); background:var(--surface-hi); padding:4px 8px; border-radius:6px; font-weight:600; border:1px solid var(--surface-light);">🔒 Member</span>`;
-        }
+      if (isAdmin) {
+        actionContainer.innerHTML = `<button class="btn btn-sm btn-danger" style="background:linear-gradient(135deg, #ef4444, #b91c1c); color:#fff; border:none; padding:5px 12px; font-size:11px; border-radius:8px; font-weight:700; box-shadow:0 0 10px rgba(239,68,68,0.3);" onclick="clearCurrentChat()">Clear (Admin) 🗑️</button>`;
       } else {
-        document.getElementById('chatTargetSub').innerText = '● Direct Bluetooth Radio Link';
         actionContainer.innerHTML = `<button class="btn btn-sm btn-secondary" style="padding:5px 12px; font-size:11px;" onclick="clearCurrentChat()">Clear</button>`;
       }
 
       renderChatMessages();
       updateChatsList();
       renderGroupsList();
-      renderPeersList();
       switchTab('screen-chatroom');
     }
 
@@ -1705,6 +1596,10 @@
       if (!text || !activeChatId || !currentUser) return;
       input.value = '';
 
+      const targetGroupId = activeChatId;
+      const group = groupsList.find(g => g.id === targetGroupId);
+      const groupName = group ? group.name : (targetGroupId === 'group_nearby_public' ? '#Nearby-Public-Mesh' : '#' + targetGroupId.replace('group_', '').replace(/_/g, '-'));
+
       const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -1712,20 +1607,23 @@
         messageId: msgId,
         senderId: currentUser.id,
         senderName: currentUser.displayName,
-        destinationId: activeChatId,
+        destinationId: targetGroupId,
+        groupId: targetGroupId,
+        groupName: groupName,
+        groupDesc: group ? group.desc : '',
         text: text,
         time: timeStr,
-        ttl: 99999, // Infinite Multi-Hop Loop (Unlimited Hops Relay)
+        ttl: 99999, // Infinite Multi-Hop Loop
         hops: 0,
         routeHistory: [currentUser.id],
         createdAt: Date.now()
       };
 
-      if (!chatHistories[activeChatId]) chatHistories[activeChatId] = [];
-      chatHistories[activeChatId].push({
+      if (!chatHistories[targetGroupId]) chatHistories[targetGroupId] = [];
+      chatHistories[targetGroupId].push({
         ...envelope,
         isMe: true,
-        status: '✓ Sent via BLE'
+        status: '✓ Broadcast'
       });
       localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
 
@@ -1751,20 +1649,31 @@
       }
     }
 
-    function onMessageReceived(envelope, isGroupMsg) {
-      let convId;
-      if (isGroupMsg) {
-        convId = envelope.destinationId;
-      } else if (activeChatId && (activeChatId === envelope.senderId || activeChatId.startsWith('ble_') || activeChatId === envelope.destinationId)) {
-        convId = activeChatId;
-      } else {
-        convId = envelope.senderId;
+    function onGroupMessageReceived(envelope, groupId) {
+      const convId = envelope.groupId || envelope.destinationId || groupId || 'group_nearby_public';
+      const groupName = envelope.groupName || (convId === 'group_nearby_public' ? '#Nearby-Public-Mesh' : '#' + convId.replace('group_', '').replace(/_/g, '-'));
+
+      // Ensure the group exists in groupsList
+      let group = groupsList.find(g => g.id === convId);
+      if (!group) {
+        group = {
+          id: convId,
+          name: groupName,
+          desc: envelope.groupDesc || 'Mesh Group',
+          creatorId: envelope.senderId,
+          creatorName: envelope.senderName,
+          createdAt: envelope.createdAt || Date.now(),
+          members: 'Broadcast'
+        };
+        groupsList.push(group);
+        saveCustomGroups();
+        renderGroupsList();
       }
 
       if (!chatHistories[convId]) chatHistories[convId] = [];
 
       if (!chatHistories[convId].some(m => m.messageId === envelope.messageId)) {
-        const hopLabel = envelope.hops ? `✓✓ Received (${envelope.hops} Hops)` : '✓✓ Received';
+        const hopLabel = envelope.hops ? `✓✓ ${envelope.hops} Hops` : '✓✓ Direct';
         chatHistories[convId].push({
           ...envelope,
           isMe: false,
@@ -1772,80 +1681,44 @@
         });
         localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
 
-        if (!isGroupMsg) {
-          transmitPacket({
-            type: 'MESSAGE_ACK',
-            packetId: 'ack_' + envelope.messageId,
-            messageId: envelope.messageId,
-            recipientId: currentUser.id,
-            destinationId: envelope.senderId
-          });
-        }
-
         // 🔔 ALWAYS PLAY CHIME AND VIBRATE ON EVERY RECEIVED MESSAGE!
         playMessageChime();
         if (navigator.vibrate) navigator.vibrate([150, 70, 150]);
 
-        const isCurrentlyOpen = (activeChatId === convId || (isGroupMsg && activeChatId === envelope.destinationId));
+        const isCurrentlyOpen = (activeChatId === convId);
         if (isCurrentlyOpen) {
           unreadCountsByChat[convId] = 0;
           renderChatMessages();
         } else {
           unreadCountsByChat[convId] = (unreadCountsByChat[convId] || 0) + 1;
-          const targetTitle = isGroupMsg ? (groupsList.find(g => g.id === convId)?.name || 'Group') : envelope.senderName;
-          showToastNotification(targetTitle, `${envelope.senderName}: ${envelope.text}`, convId);
+          showToastNotification(groupName, `${envelope.senderName}: ${envelope.text}`, convId);
         }
 
         localStorage.setItem('qc_unread_counts', JSON.stringify(unreadCountsByChat));
         refreshTotalUnreadCount();
         updateChatsList();
         renderGroupsList();
-        renderPeersList();
-      }
-    }
-
-    function onMessageAckReceived(messageId, recipientId) {
-      for (const convId in chatHistories) {
-        const msg = chatHistories[convId].find(m => m.messageId === messageId);
-        if (msg) {
-          msg.status = '✓✓ Delivered (Chain Confirmed)';
-          localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
-          if (activeChatId === convId) renderChatMessages();
-          break;
-        }
       }
     }
 
     function clearCurrentChat() {
       if (!activeChatId || !currentUser) return;
-      const isGroup = activeChatId.startsWith('group_') || activeChatId === 'broadcast';
+      const group = groupsList.find(g => g.id === activeChatId);
+      const isAdmin = group && group.creatorId && group.creatorId === currentUser.id;
 
-      if (isGroup) {
-        const group = groupsList.find(g => g.id === activeChatId);
-        
-        // Check if user is the admin / creator
-        const isAdmin = group && group.creatorId && group.creatorId === currentUser.id;
-        
-        if (!isAdmin) {
-          showToastNotification('QuickChat Warning', '⚠️ Only the group creator / admin can clear this group chat.');
-          alert('⚠️ Only the group creator / admin can clear this group chat.');
-          return;
+      if (group && group.creatorId && !isAdmin) {
+        showToastNotification('QuickChat Notice', '🧹 Cleared local chat history view.', activeChatId);
+      } else if (isAdmin) {
+        if (confirm(`Are you sure you want to clear this group chat for ALL mesh members?`)) {
+          transmitPacket({
+            type: 'CLEAR_GROUP_CHAT',
+            groupId: activeChatId,
+            adminId: currentUser.id,
+            clearedBy: currentUser.displayName
+          });
         }
-
-        if (!confirm(`Are you sure you want to clear this group chat for ALL mesh members?`)) {
-          return;
-        }
-
-        // Broadcast admin clear to all mesh nodes
-        transmitPacket({
-          type: 'CLEAR_GROUP_CHAT',
-          groupId: activeChatId,
-          adminId: currentUser.id,
-          clearedBy: currentUser.displayName
-        });
       }
 
-      // Clear local history
       chatHistories[activeChatId] = [];
       unreadCountsByChat[activeChatId] = 0;
       localStorage.setItem('qc_chat_histories', JSON.stringify(chatHistories));
@@ -1853,7 +1726,6 @@
       refreshTotalUnreadCount();
       renderChatMessages();
       updateChatsList();
-      showToastNotification('QuickChat', '🧹 Chat history cleared successfully.');
     }
 
     function updateUnreadBadge() {
@@ -1873,7 +1745,7 @@
       if (history.length === 0) {
         box.innerHTML = `
           <div style="text-align:center; padding:40px 10px; color:var(--text-muted); font-size:12.5px;">
-            🔒 Multi-Hop Chain Relay Channel Active<br>Messages route directly from node to node across the mesh.
+            🔒 Multi-Hop Group Broadcast Channel Active<br>Messages route directly across all phones in range.
           </div>
         `;
         return;
@@ -1881,7 +1753,7 @@
 
       let html = `
         <div style="text-align:center; padding:10px; color:var(--text-muted); font-size:11px;">
-          🔒 End-to-End Encrypted Mesh Channel Active
+          🔒 Decentralized Mesh Broadcast Channel Active
         </div>
       `;
 
@@ -1929,14 +1801,13 @@
         container.innerHTML = `
           <div class="empty-state">
             <svg class="empty-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <div class="empty-title">No Active Conversations</div>
-            <div class="empty-desc">Join <strong>#Nearby-Public-Mesh</strong> or create a group on the Groups tab.</div>
+            <div class="empty-title">No Active Group Conversations</div>
+            <div class="empty-desc">Open <strong>#Nearby-Public-Mesh</strong> on the Groups tab to start broadcasting!</div>
           </div>
         `;
         return;
       }
 
-      // Sort conversations: Unread first, then latest message timestamp
       keys.sort((a, b) => {
         const unreadA = unreadCountsByChat[a] || 0;
         const unreadB = unreadCountsByChat[b] || 0;
@@ -1953,24 +1824,22 @@
       for (const convId of keys) {
         const msgs = chatHistories[convId];
         const lastMsg = msgs[msgs.length - 1];
-        const isGroup = convId.startsWith('group_');
-        const peer = discoveredPeers.get(convId);
         const group = groupsList.find(g => g.id === convId);
-        const title = isGroup ? (group ? group.name : 'Community Group') : (peer ? peer.displayName : (convId.startsWith('ble_') ? 'Nearby BLE Phone' : 'Direct Chat'));
+        const title = group ? group.name : (convId === 'group_nearby_public' ? '#Nearby-Public-Mesh' : ('#' + convId.replace('group_', '').replace(/_/g, '-')));
         const unread = unreadCountsByChat[convId] || 0;
 
         html += `
-          <div class="peer-item ${unread > 0 ? 'has-unread' : ''}" onclick="openChatRoom('${convId}', '${title.replace(/'/g, "\\'")}', ${isGroup})" style="cursor:pointer;">
+          <div class="peer-item ${unread > 0 ? 'has-unread' : ''}" onclick="openChatRoom('${convId}', '${title.replace(/'/g, "\\'")}', true)" style="cursor:pointer;">
             <div class="peer-item-left" style="min-width:0; flex:1;">
-              <div class="peer-avatar ${isGroup ? 'group-avatar' : ''} ${unread > 0 ? 'unread-avatar-glow' : ''}">
-                ${isGroup ? '👥' : title.charAt(0).toUpperCase()}
+              <div class="peer-avatar group-avatar ${unread > 0 ? 'unread-avatar-glow' : ''}">
+                📢
               </div>
               <div style="min-width:0; flex:1; overflow:hidden;">
                 <div class="peer-name" style="${unread > 0 ? 'color:var(--accent); font-weight:800;' : ''}">
                   ${title} ${unread > 0 ? '<span class="unread-dot-inline">●</span>' : ''}
                 </div>
                 <div class="peer-sub" style="${unread > 0 ? 'color:#FFFFFF; font-weight:600;' : ''}">
-                  ${lastMsg ? (lastMsg.isMe ? 'You: ' : (isGroup ? lastMsg.senderName + ': ' : '')) + lastMsg.text : 'No messages'}
+                  ${lastMsg ? (lastMsg.isMe ? 'You: ' : (lastMsg.senderName + ': ')) + lastMsg.text : 'No messages'}
                 </div>
               </div>
             </div>
@@ -1990,7 +1859,6 @@
     function refreshBleDiscovery() {
       initNativeBleMesh();
       forceBroadcast();
-      showToastNotification('QuickChat BLE', '🔄 Scanning for nearby phones over Bluetooth...');
     }
 
     // 15. Navigation Tabs
