@@ -3,96 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>QuickChat — 100% Offline Bluetooth Mesh Group Messenger</title>
+  <title>QuickChat — Zero-Internet Bluetooth Mesh Group Messenger for Android</title>
   <link rel="icon" type="image/png" href="../app_icon.png">
   <meta name="theme-color" content="#0B0E17">
-  <meta name="description" content="QuickChat — 100% Offline Multi-Hop Bluetooth Mesh Group Chat App for Android. Zero internet, Zero SIM, Infinite Phone Relaying.">
+  
+  <!-- Primary Meta Tags -->
+  <meta name="title" content="QuickChat — Zero-Internet Bluetooth Mesh Group Messenger for Android">
+  <meta name="description" content="QuickChat connects Android phones directly via Bluetooth Low Energy Multi-Hop Mesh. 100% Offline group chat with Zero Internet, Zero SIM, and Infinite Phone Relaying.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cyconik.github.io/QuickChat/">
+  <meta property="og:title" content="QuickChat — 100% Offline Bluetooth Mesh Group Messenger">
+  <meta property="og:description" content="Chat with everyone nearby without Internet or Cellular Network. Download QuickChat APK for Android.">
+  <meta property="og:image" content="../app_icon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <!-- QRCode.js for generating instant scan-to-download QR code on desktop -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     :root {
-      --bg: #0B0E17;
-      --surface: #131826;
-      --surface-light: #1B2238;
-      --surface-hi: #242F4D;
+      --bg: #07090F;
+      --surface: #0F1422;
+      --surface-light: #182038;
+      --surface-hi: #222C4D;
       --primary: #00E5FF;
-      --primary-glow: rgba(0, 229, 255, 0.35);
+      --primary-glow: rgba(0, 229, 255, 0.4);
       --secondary: #7C4DFF;
-      --secondary-glow: rgba(124, 77, 255, 0.35);
+      --secondary-glow: rgba(124, 77, 255, 0.4);
       --accent: #00F59B;
-      --accent-glow: rgba(0, 245, 155, 0.35);
+      --accent-glow: rgba(0, 245, 155, 0.4);
       --bluetooth: #2979FF;
-      --bluetooth-glow: rgba(41, 121, 255, 0.4);
+      --bluetooth-glow: rgba(41, 121, 255, 0.45);
       --warning: #FFB300;
       --error: #FF3366;
-      --text: #F1F5F9;
+      --text: #F8FAFC;
       --text-muted: #94A3B8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
     body { background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; line-height: 1.6; }
 
-    /* Animated background glow */
+    /* Animated background ambient lights */
     .bg-glow-1 {
       position: fixed;
-      top: -150px;
+      top: -200px;
       left: 50%;
       transform: translateX(-50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, rgba(124, 77, 255, 0.08) 50%, transparent 70%);
+      width: 750px;
+      height: 750px;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.18) 0%, rgba(124, 77, 255, 0.1) 45%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
     .bg-glow-2 {
       position: fixed;
-      bottom: -150px;
+      bottom: -200px;
       right: -100px;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(0, 245, 155, 0.1) 0%, transparent 70%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 245, 155, 0.12) 0%, rgba(41, 121, 255, 0.08) 50%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
 
-    .container { max-width: 900px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
 
-    /* Navigation */
+    /* Top Sticky Navigation */
     .navbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 0;
+      padding: 18px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      margin-bottom: 40px;
+      position: sticky;
+      top: 0;
+      background: rgba(7, 9, 15, 0.85);
+      backdrop-filter: blur(14px);
+      z-index: 100;
     }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
-    .brand-logo { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 20px var(--primary-glow); }
-    .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand-logo { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 20px var(--primary-glow); }
+    .brand-name { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
     .brand-badge { background: rgba(0, 245, 155, 0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
 
-    .nav-links { display: flex; gap: 12px; }
-    .nav-btn {
-      background: var(--surface-hi);
-      color: var(--text);
-      text-decoration: none;
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .btn-nav-download {
+      background: linear-gradient(135deg, var(--primary), #00B0FF);
+      color: #050B14;
       font-size: 13px;
-      font-weight: 700;
-      padding: 8px 16px;
+      font-weight: 800;
+      text-decoration: none;
+      padding: 9px 18px;
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 16px var(--primary-glow);
       transition: all 0.2s;
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
-    .nav-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
+    .btn-nav-download:hover { transform: translateY(-2px); box-shadow: 0 0 24px rgba(0, 229, 255, 0.6); }
+
+    .btn-nav-share {
+      background: var(--surface-hi);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-nav-share:hover { border-color: var(--primary); color: var(--primary); }
 
     /* Hero Section */
-    .hero { text-align: center; padding: 30px 0 50px; }
+    .hero { text-align: center; padding: 40px 0 30px; }
     .hero-pill {
       display: inline-flex;
       align-items: center;
@@ -101,87 +132,89 @@
       border: 1px solid var(--bluetooth);
       color: #82B1FF;
       font-size: 12px;
-      font-weight: 700;
-      padding: 6px 14px;
+      font-weight: 800;
+      padding: 6px 16px;
       border-radius: 30px;
-      margin-bottom: 20px;
-      box-shadow: 0 0 15px var(--bluetooth-glow);
+      margin-bottom: 22px;
+      box-shadow: 0 0 20px var(--bluetooth-glow);
+      letter-spacing: 0.5px;
     }
+    .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.15); } }
+
     .hero-title {
-      font-size: 40px;
+      font-size: 44px;
       font-weight: 900;
-      line-height: 1.15;
-      letter-spacing: -1px;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #FFFFFF 0%, #00E5FF 50%, #7C4DFF 100%);
+      line-height: 1.12;
+      letter-spacing: -1.2px;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #00E5FF 45%, #7C4DFF 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    @media (max-width: 640px) { .hero-title { font-size: 32px; } }
+
     .hero-desc {
-      font-size: 16px;
+      font-size: 16.5px;
       color: var(--text-muted);
-      max-width: 680px;
-      margin: 0 auto 32px;
-      line-height: 1.5;
+      max-width: 720px;
+      margin: 0 auto 34px;
+      line-height: 1.55;
     }
 
-    /* CTA Buttons */
-    .cta-group {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 40px;
+    /* Main CTA Box */
+    .cta-hero-box {
+      background: linear-gradient(135deg, rgba(15, 20, 34, 0.95), rgba(34, 44, 77, 0.8));
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      border-radius: 24px;
+      padding: 30px 24px;
+      max-width: 680px;
+      margin: 0 auto 40px;
+      box-shadow: 0 16px 50px rgba(0, 229, 255, 0.15);
+      text-align: center;
     }
-    .btn-download {
+    .btn-main-download {
       background: linear-gradient(135deg, #00E5FF 0%, #00B0FF 100%);
       color: #050B14;
-      font-size: 16px;
-      font-weight: 800;
+      font-size: 18px;
+      font-weight: 900;
       text-decoration: none;
-      padding: 16px 32px;
-      border-radius: 14px;
+      padding: 18px 36px;
+      border-radius: 16px;
       display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 10px 30px var(--primary-glow);
-      transition: all 0.2s;
-    }
-    .btn-download:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 14px 40px rgba(0, 229, 255, 0.6); }
-
-    .btn-github {
-      background: var(--surface);
-      border: 1px solid var(--surface-hi);
-      color: var(--text);
-      font-size: 16px;
-      font-weight: 700;
-      text-decoration: none;
-      padding: 16px 28px;
-      border-radius: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s;
-    }
-    .btn-github:hover { border-color: var(--secondary); color: #B388FF; transform: translateY(-3px); }
-
-    /* Live Mesh Chain Demo Banner */
-    .mesh-visual-banner {
-      background: linear-gradient(135deg, rgba(19, 24, 38, 0.9), rgba(36, 47, 77, 0.8));
-      border: 1px solid rgba(0, 229, 255, 0.3);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-      margin-bottom: 50px;
-    }
-    .mesh-chain-flex {
-      display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
+      gap: 12px;
+      box-shadow: 0 10px 35px var(--primary-glow);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      width: 100%;
+      max-width: 440px;
     }
+    .btn-main-download:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 16px 45px rgba(0, 229, 255, 0.6); }
+
+    .meta-sub {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .meta-sub span { display: flex; align-items: center; gap: 4px; }
+
+    /* Live Multi-Hop Chain Visualizer */
+    .chain-card {
+      background: var(--surface);
+      border: 1px solid var(--bluetooth);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 50px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .chain-title { font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; text-align: center; }
+    .chain-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
     .chain-node {
       background: var(--surface-hi);
       border: 1px solid var(--primary);
@@ -192,91 +225,143 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 0 10px var(--primary-glow);
+      box-shadow: 0 0 12px var(--primary-glow);
+      white-space: nowrap;
     }
-    .chain-arrow { color: var(--accent); font-weight: 900; font-size: 14px; animation: pulse 1.2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } }
+    .chain-arrow { color: var(--accent); font-weight: 900; font-size: 13px; animation: pulse 1.2s infinite; }
 
-    /* Cards Grid */
-    .section-title { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 10px; }
-    .section-subtitle { font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 30px; }
+    /* Guide Section */
+    .section-header { text-align: center; margin-bottom: 28px; }
+    .section-title { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .section-subtitle { font-size: 14.5px; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
 
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 50px; }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--surface-light);
-      border-radius: 18px;
-      padding: 22px;
-      transition: all 0.2s;
-    }
-    .feature-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0, 229, 255, 0.15); }
-    .feature-icon { font-size: 32px; margin-bottom: 12px; }
-    .feature-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
-    .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-
-    /* Step-by-Step Installation Guide (CRITICAL) */
-    .guide-box {
-      background: linear-gradient(135deg, rgba(19, 24, 38, 0.95), rgba(27, 34, 56, 0.95));
-      border: 1px solid var(--secondary);
+    .guide-wrapper {
+      background: linear-gradient(135deg, rgba(15, 20, 34, 0.98), rgba(24, 32, 56, 0.98));
+      border: 1.5px solid var(--secondary);
       border-radius: 24px;
-      padding: 30px;
-      margin-bottom: 50px;
-      box-shadow: 0 12px 40px rgba(124, 77, 255, 0.18);
+      padding: 32px 24px;
+      margin-bottom: 60px;
+      box-shadow: 0 16px 50px rgba(124, 77, 255, 0.2);
     }
-    .guide-steps { display: flex; flex-direction: column; gap: 18px; margin-top: 20px; }
-    .step-item {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
+    .steps-list { display: flex; flex-direction: column; gap: 20px; }
+    .step-card {
       background: var(--surface-hi);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 18px;
-      border-radius: 16px;
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
       transition: all 0.2s;
     }
-    .step-item:hover { border-color: var(--accent); }
-    .step-num {
+    .step-card:hover { border-color: var(--accent); box-shadow: 0 8px 24px rgba(0, 245, 155, 0.12); }
+    .step-badge {
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       color: #050B14;
       font-weight: 900;
-      font-size: 14px;
-      width: 32px;
-      height: 32px;
+      font-size: 15px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 0 12px var(--primary-glow);
     }
-    .step-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
-    .step-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-    .step-alert {
+    .step-heading { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .step-text { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; }
+    .step-hindi { font-size: 13px; color: #CBD5E1; margin-top: 6px; font-weight: 500; }
+    .step-callout {
       background: rgba(255, 179, 0, 0.12);
       border-left: 3px solid var(--warning);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      color: #FFD54F;
-      margin-top: 8px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: #FFE082;
+      margin-top: 10px;
       font-weight: 600;
+      line-height: 1.45;
     }
-    .step-lock {
+    .step-lock-box {
       background: rgba(0, 245, 155, 0.12);
       border-left: 3px solid var(--accent);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
       color: var(--accent);
-      margin-top: 8px;
+      margin-top: 10px;
       font-weight: 700;
+      line-height: 1.45;
     }
+
+    /* Features Grid */
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 20px; margin-bottom: 60px; }
+    .feat-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-light);
+      border-radius: 18px;
+      padding: 24px;
+      transition: all 0.25s;
+    }
+    .feat-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0, 229, 255, 0.18); }
+    .feat-icon { font-size: 32px; margin-bottom: 12px; }
+    .feat-title { font-size: 16.5px; font-weight: 800; margin-bottom: 6px; }
+    .feat-desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Use Cases Grid */
+    .use-cases-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 60px; }
+    .use-card {
+      background: var(--surface-hi);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+    .use-icon { font-size: 28px; margin-bottom: 6px; }
+    .use-title { font-size: 14px; font-weight: 800; color: var(--text); }
+    .use-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* FAQ Section */
+    .faq-wrapper { margin-bottom: 60px; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--surface-light);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+    }
+    .faq-q { font-size: 15px; font-weight: 800; color: var(--primary); margin-bottom: 6px; }
+    .faq-a { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Toast Alert */
+    #shareToast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface-hi);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      box-shadow: 0 10px 30px rgba(0, 245, 155, 0.4);
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 13.5px;
+      font-weight: 800;
+      z-index: 9999;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #shareToast.show { transform: translateX(-50%) translateY(0); }
 
     /* Footer */
     .footer {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 30px 0 50px;
+      padding: 36px 0 60px;
       text-align: center;
-      font-size: 13px;
+      font-size: 13.5px;
       color: var(--text-muted);
     }
     .footer a { color: var(--primary); text-decoration: none; font-weight: 700; }
@@ -287,6 +372,11 @@
   <div class="bg-glow-1"></div>
   <div class="bg-glow-2"></div>
 
+  <!-- Share Confirmation Toast -->
+  <div id="shareToast">
+    <span>✅</span> Link copied to clipboard! Share it with your friends.
+  </div>
+
   <div class="container">
     <!-- Navbar -->
     <header class="navbar">
@@ -295,169 +385,276 @@
         <div>
           <div class="brand-name">QuickChat</div>
         </div>
-        <span class="brand-badge">MESH GROUPS</span>
+        <span class="brand-badge">OFFLINE MESH</span>
       </a>
-      <div class="nav-links">
-        <a href="#guide" class="nav-btn">📖 Setup Guide</a>
-        <a href="https://github.com/Cyconik/QuickChat" target="_blank" class="nav-btn">⭐ GitHub</a>
+      <div class="nav-actions">
+        <button class="btn-nav-share" onclick="copyShareLink()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share Link
+        </button>
+        <a href="https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk" class="btn-nav-download">
+          ⬇️ Download APK
+        </a>
       </div>
     </header>
 
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-pill">
-        <span>📡 100% OFFLINE BLUETOOTH MESH</span>
+        <span class="live-dot"></span>
+        <span>100% OFFLINE BLUETOOTH MESH CHAT</span>
       </div>
-      <h1 class="hero-title">Zero-Internet Decentralized<br>Mesh Group Chat for Android</h1>
+      <h1 class="hero-title">Zero-Internet Decentralized<br>Mesh Group Messenger</h1>
       <p class="hero-desc">
-        Chat with everyone nearby without Cellular Towers, Wi-Fi, Internet, or SIM Cards. QuickChat turns your phone into an automatic Bluetooth Low Energy (BLE) Multi-Hop Relay node that broadcasts group messages across endless hops.
+        Chat with everyone nearby without Cellular Towers, Wi-Fi, Internet, or SIM Cards. QuickChat turns your phone into an automatic Bluetooth Low Energy (BLE) Multi-Hop Relay node that broadcasts group messages across endless phone-to-phone hops.
       </p>
 
-      <div class="cta-group">
-        <a href="https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk" class="btn-download">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <!-- Main Download Card -->
+      <div class="cta-hero-box">
+        <a href="https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk" class="btn-main-download">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download QuickChat APK (Android)
         </a>
-        <a href="https://github.com/Cyconik/QuickChat" target="_blank" class="btn-github">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-          View Source Code
-        </a>
+        <div class="meta-sub">
+          <span>📦 Size: ~9.2 MB</span>
+          <span>⚡ Version: v2.0 Mesh Groups</span>
+          <span>🔒 100% Free & Open Source</span>
+        </div>
       </div>
 
-      <!-- Live Mesh Chain Banner -->
-      <div class="mesh-visual-banner">
-        <div style="font-size:13px; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:1px;">
-          🌐 Infinite Multi-Hop Bluetooth Chain Architecture
-        </div>
-        <div class="mesh-chain-flex">
-          <div class="chain-node" style="border-color:var(--primary);">📱 Phone A (Sender)</div>
+      <!-- Live Mesh Chain Demo Card -->
+      <div class="chain-card">
+        <div class="chain-title">🌐 Live Multi-Hop Chain Forwarding (A ➔ B ➔ C ➔ D ➔ ♾️)</div>
+        <div class="chain-row">
+          <div class="chain-node" style="border-color:var(--primary);">📍 You (Phone A)</div>
           <span class="chain-arrow">➔➔</span>
           <div class="chain-node" style="border-color:var(--bluetooth);">📡 Phone B (Relay 1)</div>
           <span class="chain-arrow">➔➔</span>
           <div class="chain-node" style="border-color:var(--secondary);">📡 Phone C (Relay 2)</div>
           <span class="chain-arrow">➔➔</span>
-          <div class="chain-node" style="border-color:var(--accent);">👥 Group (#Public-Mesh)</div>
+          <div class="chain-node" style="border-color:var(--accent); color:var(--accent);">👥 Group (#Public-Mesh)</div>
         </div>
       </div>
     </section>
 
-    <!-- Key Features -->
+    <!-- STEP-BY-STEP SETUP & INSTALLATION GUIDE -->
+    <section id="guide" class="guide-wrapper">
+      <div class="section-header">
+        <div style="font-size:32px; margin-bottom:6px;">📱</div>
+        <h2 class="section-title">Step-by-Step Setup Guide</h2>
+        <p class="section-subtitle">Follow these 4 simple steps to set up QuickChat and keep the background Bluetooth radio always active:</p>
+      </div>
+
+      <div class="steps-list">
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-badge">1</div>
+          <div>
+            <div class="step-heading">Step 1: Install APK & Close Recent Apps</div>
+            <div class="step-text">
+              Download and install <strong>QuickChat-Mesh-Offline.apk</strong> on your Android phone. Once installed, close all existing background apps and tabs from your phone's Recent Apps screen before opening QuickChat.
+            </div>
+            <div class="step-hindi">
+              👉 <em>App install karne ke baad turant open karne se pehle phone ke saare background apps/tabs close karein.</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-badge">2</div>
+          <div>
+            <div class="step-heading">Step 2: Set Username & Display Name</div>
+            <div class="step-text">
+              Open QuickChat. Enter your chosen Display Name and Username handle (or tap <strong>🎲 Shuffle</strong> to pick an instant 1-tap anonymous nickname), then tap <strong>Launch QuickChat Mesh 🚀</strong>.
+            </div>
+            <div class="step-hindi">
+              👉 <em>App open karein aur apna Name aur Username set karein. Koi phone number ya OTP ki zarurat nahi hai.</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-badge">3</div>
+          <div>
+            <div class="step-heading">Step 3: Grant Bluetooth & Location Permissions</div>
+            <div class="step-text">
+              When prompted, grant <strong>Bluetooth / Nearby Devices</strong> and <strong>Location</strong> permissions so that Android allows the Native BLE Radio to continuously discover neighboring phones.
+            </div>
+            <div class="step-hindi">
+              👉 <em>Sabhi permissions (Bluetooth & Location) allow karein.</em>
+            </div>
+            <div class="step-callout">
+              ⚠️ <strong>Troubleshooting Note:</strong> If permission prompts do not appear on first launch, clear QuickChat from Recent Apps and reopen it, or go to <strong>Phone Settings ➔ Apps ➔ QuickChat ➔ Permissions</strong> and manually enable "Nearby Devices" and "Location".
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step-card">
+          <div class="step-badge">4</div>
+          <div>
+            <div class="step-heading">Step 4: Lock App in Background (Most Important! 🔒)</div>
+            <div class="step-text">
+              To ensure you <strong>never miss any incoming group messages</strong>, keep QuickChat running in the background. If the app is swiped away or killed by Android, the Bluetooth radio stops listening.
+            </div>
+            <div class="step-hindi">
+              👉 <em>App ko background me ON rakhein taaki continuous group messages receive hote rahein!</em>
+            </div>
+            <div class="step-lock-box">
+              🔒 <strong>How to Lock App:</strong> Open your phone's <em>Recent Apps</em> screen, long-press or tap the lock icon / 3 dots on the QuickChat card, and select <strong>Lock App (🔒)</strong>. Also set Battery Usage to <em>"Unrestricted / Don't Optimize"</em> so Android doesn't kill the mesh radio in sleep mode.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY FEATURES -->
     <section>
-      <h2 class="section-title">Why QuickChat Mesh?</h2>
-      <p class="section-subtitle">Engineered for emergencies, outdoor adventures, concerts, campuses & blackout situations.</p>
+      <div class="section-header">
+        <h2 class="section-title">Core Mesh Features</h2>
+        <p class="section-subtitle">Everything built into QuickChat for true zero-network decentralized group communication:</p>
+      </div>
 
       <div class="grid-3">
-        <div class="feature-card">
-          <div class="feature-icon">📢</div>
-          <div class="feature-title">#Nearby-Public-Mesh</div>
-          <div class="feature-desc">Open the app and instantly talk to everyone within range. Broadcasts fan out across all connected phones.</div>
+        <div class="feat-card">
+          <div class="feat-icon">📢</div>
+          <div class="feat-title">#Nearby-Public-Mesh</div>
+          <div class="feat-desc">The default global broadcast room. Anyone in Bluetooth range connects automatically and chats together.</div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">👥</div>
-          <div class="feature-title">Permanent Custom Groups</div>
-          <div class="feature-desc">Create custom channels (e.g. <code>#Trek-Squad</code>, <code>#Campus-Hub</code>). Groups sync permanently across the mesh with gossip discovery.</div>
+        <div class="feat-card">
+          <div class="feat-icon">👥</div>
+          <div class="feat-title">Permanent Custom Groups</div>
+          <div class="feat-desc">Create custom group channels like <code>#Trek-Squad</code> or <code>#Campus-Hub</code>. Groups stay saved permanently and sync across all phones.</div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🔄</div>
-          <div class="feature-title">Infinite Multi-Hop Relaying</div>
-          <div class="feature-desc">Intermediate phones automatically forward BLE packets across 10, 50, or 100+ phones without server bottlenecks.</div>
+        <div class="feat-card">
+          <div class="feat-icon">🔄</div>
+          <div class="feat-title">Infinite Multi-Hop Relaying</div>
+          <div class="feat-desc">If Phone C is out of range from Phone A, Phone B automatically relays the radio packet seamlessly across the chain.</div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🔔</div>
-          <div class="feature-title">Instant Chime & Vibration</div>
-          <div class="feature-desc">Audible Web Audio synthesizers and haptic vibrations alert you on every incoming message.</div>
+        <div class="feat-card">
+          <div class="feat-icon">🔔</div>
+          <div class="feat-title">Audible Chimes & Vibration</div>
+          <div class="feat-desc">Built-in audio synthesizer plays clear chimes and triggers haptic vibrations on every received message.</div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">👑</div>
-          <div class="feature-title">Admin Controls</div>
-          <div class="feature-desc">Group creators get an Admin crown badge 👑 and can clear chat history across all participating mesh nodes.</div>
+        <div class="feat-card">
+          <div class="feat-icon">👑</div>
+          <div class="feat-title">Admin Clear Controls</div>
+          <div class="feat-desc">Group creators receive an Admin crown badge 👑 and can clear group chat history across the entire mesh chain.</div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🛡️</div>
-          <div class="feature-title">Zero Data Logging</div>
-          <div class="feature-desc">No phone number, email, or password required. Messages stay 100% on your local Bluetooth radio link.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- STEP-BY-STEP SETUP GUIDE -->
-    <section id="guide" class="guide-box">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-        <span style="font-size:24px;">📱</span>
-        <h2 style="font-size:20px; font-weight:800;">App Installation & Setup Guide (Crucial)</h2>
-      </div>
-      <p style="font-size:13px; color:var(--text-muted);">
-        Follow these steps carefully to ensure your phone continuously listens to the mesh and never drops incoming group chats:
-      </p>
-
-      <div class="guide-steps">
-        <div class="step-item">
-          <div class="step-num">1</div>
-          <div>
-            <div class="step-title">Install APK & Close Recent Apps First</div>
-            <div class="step-desc">
-              Download and install <strong>QuickChat-Mesh-Offline.apk</strong>. Once installed, close all existing background tabs and recent apps before opening the app for the first time.
-            </div>
-          </div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-num">2</div>
-          <div>
-            <div class="step-title">Set Username & Display Name</div>
-            <div class="step-desc">
-              Open QuickChat. Pick your preferred Display Name and Username handle (or tap <strong>🎲 Shuffle</strong> to pick a quick 1-tap anonymous nickname), then tap <strong>Launch QuickChat Mesh 🚀</strong>.
-            </div>
-          </div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-num">3</div>
-          <div>
-            <div class="step-title">Grant All Required Permissions (Bluetooth & Location)</div>
-            <div class="step-desc">
-              Allow <strong>Bluetooth / Nearby Devices</strong> and <strong>Location</strong> permissions so the Native BLE Mesh radio can discover neighboring phones.
-            </div>
-            <div class="step-alert">
-              ⚠️ <strong>Permission Troubleshooting:</strong> If the permission prompt doesn't show up, clear the app from Recent Apps and reopen it, or go to <em>Phone Settings ➔ Apps ➔ QuickChat ➔ Permissions</em> and enable "Nearby Devices" and "Location".
-            </div>
-          </div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-num">4</div>
-          <div>
-            <div class="step-title">Keep App in Background & Lock in Recent Apps 🔒</div>
-            <div class="step-desc">
-              To ensure you <strong>never miss any incoming group messages</strong>, do NOT swipe away the app from your Recent Apps list. Keep QuickChat running in the background.
-            </div>
-            <div class="step-lock">
-              🔒 <strong>Pro Tip (Lock App):</strong> Open your phone's <em>Recent Apps</em> screen, long-press or tap the 3 dots on the QuickChat card, and select <strong>Lock App (🔒)</strong>. Also set Battery Usage to <em>"Unrestricted / Don't Optimize"</em> so Android doesn't kill the Bluetooth mesh radio.
-            </div>
-          </div>
+        <div class="feat-card">
+          <div class="feat-icon">🛡️</div>
+          <div class="feat-title">Zero Tracking & Privacy</div>
+          <div class="feat-desc">100% serverless and decentralized. No phone numbers, no emails, no logins, and zero metadata collection.</div>
         </div>
       </div>
     </section>
 
-    <!-- Direct Download Section Footer -->
-    <section style="text-align:center; padding:20px 0 50px;">
-      <h2 style="font-size:22px; font-weight:800; margin-bottom:12px;">Ready to Start Offline Group Chatting?</h2>
-      <a href="https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk" class="btn-download" style="font-size:15px; padding:14px 28px;">
-        ⬇️ Download QuickChat-Mesh-Offline.apk
-      </a>
+    <!-- USE CASES -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">Where QuickChat is Essential</h2>
+        <p class="section-subtitle">When conventional cellular and Wi-Fi networks fail, QuickChat keeps you connected:</p>
+      </div>
+
+      <div class="use-cases-grid">
+        <div class="use-card">
+          <div class="use-icon">⛰️</div>
+          <div class="use-title">Trekking & Hiking</div>
+          <div class="use-desc">Remote mountain areas with zero cellular signals.</div>
+        </div>
+        <div class="use-card">
+          <div class="use-icon">⚡</div>
+          <div class="use-title">Power Outages & SOS</div>
+          <div class="use-desc">Disasters, floods, cyclones & grid failures.</div>
+        </div>
+        <div class="use-card">
+          <div class="use-icon">🏟️</div>
+          <div class="use-title">Concerts & Stadiums</div>
+          <div class="use-desc">Crowded venues where 4G/5G mobile towers get congested.</div>
+        </div>
+        <div class="use-card">
+          <div class="use-icon">🎓</div>
+          <div class="use-title">College Campuses</div>
+          <div class="use-desc">Free local offline mesh chat across dorms & classrooms.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="faq-wrapper">
+      <div class="section-header">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">❓ Does QuickChat require any internet, Wi-Fi or SIM card?</div>
+        <div class="faq-a">No! QuickChat is 100% offline and communicates strictly through direct Bluetooth Low Energy (BLE) radio packets between phones.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">❓ What is the communication range?</div>
+        <div class="faq-a">Direct BLE range is typically 30 to 50 meters per phone. With Multi-Hop Relaying (A ➔ B ➔ C ➔ D), the range expands continuously across entire kilometers as more people run the app.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">❓ Why do I need to lock the app in background?</div>
+        <div class="faq-a">Android's battery manager aggressively terminates background Bluetooth radios when apps are closed. Locking QuickChat in your Recent Apps screen keeps the radio listening continuously for incoming group messages.</div>
+      </div>
+    </section>
+
+    <!-- Bottom Download CTA -->
+    <section style="text-align:center; padding:20px 0 60px;">
+      <div class="cta-hero-box" style="margin-bottom:0;">
+        <h3 style="font-size:22px; font-weight:900; margin-bottom:8px;">Ready to connect off-grid?</h3>
+        <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">Download the official APK now and invite your friends to the mesh.</p>
+        <a href="https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk" class="btn-main-download">
+          ⬇️ Download QuickChat-Mesh-Offline.apk
+        </a>
+      </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-      <div>QuickChat — Open Source Decentralized Offline Mesh Project</div>
-      <div style="margin-top:6px;">Built with Native Android BLE Mesh Radio • <a href="https://github.com/Cyconik/QuickChat" target="_blank">GitHub Repository</a></div>
+      <div>QuickChat — 100% Open Source Offline Bluetooth Mesh Group Messenger</div>
+      <div style="margin-top:8px;">
+        <a href="https://github.com/Cyconik/QuickChat" target="_blank">GitHub Repository</a> • 
+        <a href="https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk">Download APK</a>
+      </div>
     </footer>
   </div>
 
+  <script>
+    function copyShareLink() {
+      const url = 'https://cyconik.github.io/QuickChat/';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => showToast()).catch(() => fallbackCopy(url));
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const input = document.createElement('input');
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      showToast();
+    }
+
+    function showToast() {
+      const toast = document.getElementById('shareToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+  </script>
 </body>
 </html>
