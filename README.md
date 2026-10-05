@@ -3,8 +3,7 @@
 > **"Zero Internet. Zero Cellular Towers. Zero SIM Cards. 100% Decentralized Mesh Groups."**
 
 QuickChat is an offline communication platform for Android that connects nearby smartphones into an autonomous **Multi-Hop Bluetooth Low Energy (BLE) Mesh Chain** (`Phone A ➔ Phone B ➔ Phone C ➔ Phone D ➔ ♾️`). All messages broadcast across persistent mesh groups with zero cellular data or Wi-Fi required.
-
-🌐 **Live Landing Page & Download**: [https://cyconik.github.io/QuickChat/](https://cyconik.github.io/QuickChat/)  
+ 
 📱 **Direct APK Download**: [QuickChat-Mesh-Offline.apk](https://github.com/Cyconik/QuickChat/raw/main/QuickChat-Mesh-Offline.apk)
 
 ---
